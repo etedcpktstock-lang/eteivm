@@ -535,7 +535,7 @@ className={`shrink-0 rounded-xl border px-3 py-2 text-[12px] font-bold flex item
 {activeTab === 'void' && <VoidForm transactions={transactions} user={user} customers={customers} onRefresh={() => { fetchData(false); playSuccessSound(); }} onUpdateTransactions={updateLocalTransactions} initialTxnNo={voidTxnId || undefined} setActiveTab={setActiveTab} />}
 {activeTab === 'calendar' && <CalendarView transactions={transactions} items={items} />}
 
-{activeTab === 'job-request' && <JobRequestForm items={items} warehouses={warehouses} customers={customers} operatorName={user.name} thaiAddressData={thaiAddressData} onSuccess={() => { fetchData(true); }} onClose={() => setActiveTab('welcome')} />}
+{activeTab === 'job-request' && <JobRequestForm items={items} warehouses={warehouses} customers={customers} operatorName={user.name} thaiAddressData={thaiAddressData} transactions={transactions} logisticsJobs={logisticsJobs} onSuccess={() => { fetchData(true); }} onClose={() => setActiveTab('welcome')} />}
 
 {activeTab === 'repair' && <RepairManagement items={items} transactions={transactions} customers={customers} operatorName={user.name} onSuccess={() => fetchData(true)} onClose={() => setActiveTab('welcome')} loading={loading} />}
 {activeTab === 'logistics' && <div className="plain-page-frame plain-scope"><LogisticsDashboard items={items} customers={customers} operatorName={user.name} onNavigateToTab={handleNavigateToJobForm} onSuccess={() => fetchData(true)} initialTab={logisticsSubTab} transactions={transactions} loading={loading} /></div>}

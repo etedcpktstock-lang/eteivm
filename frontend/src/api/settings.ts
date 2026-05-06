@@ -1,7 +1,7 @@
 /**
  * Settings API — Settings, zones, warehouses, customers, users, notifications
  */
-import { API_URL, safeFetch, normalizeApiErrorMessage, getCurrentUser, initialDataCache } from './client';
+import { API_URL, safeFetch, normalizeApiErrorMessage, getCurrentUser, initialDataCache, setInitialDataCache } from './client';
 
 export const getInitialData = async (): Promise<any> => {
   if (!API_URL) throw new Error("API URL is not configured. Please start backend server.");
@@ -9,9 +9,8 @@ export const getInitialData = async (): Promise<any> => {
   if (!res.ok) throw new Error("ไม่สามารถโหลดข้อมูลเริ่มต้นได้ (Network Error)");
   const data = await res.json();
   if (data?.status === 'error') throw new Error(normalizeApiErrorMessage(data.message || 'ไม่สามารถโหลดข้อมูลเริ่มต้นได้'));
-  const { initialDataCache: cache } = await import('./client');
-  if (cache !== null) Object.assign(cache, data);
-  else { const mod = await import('./client'); (mod as any).initialDataCache = data; }
+  
+  setInitialDataCache(data);
   return data;
 };
 

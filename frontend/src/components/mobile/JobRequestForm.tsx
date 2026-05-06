@@ -4,6 +4,7 @@ import type { MaterialItem, Customer } from '../../types';
 import { Button, Icon } from '../shared/CommonUI';
 import { formatThaiDateTime } from '../../utils/dateTimeUtils';
 import { getCustomers, saveJobRequest } from '../../api';
+import { calculateCustomerInventory } from '../../utils/logisticsUtils';
 
 const JobRequestItemSelector = lazy(() => import('./JobRequestItemSelector'));
 const CustomerQuickEdit = lazy(() => import('../shared/CustomerQuickEdit'));
@@ -17,6 +18,8 @@ interface JobRequestFormProps {
  onClose: () => void;
  thaiAddressData?: any[];
  warehouses?: any[];
+ transactions?: any[];
+ logisticsJobs?: any[];
 }
 
 /**
@@ -84,7 +87,7 @@ const getCoordinates = (): Promise<string | null> => {
 };
 
 
-export default function JobRequestForm({ items, warehouses = [], customers: initialCustomers, operatorName, onSuccess, onClose, thaiAddressData = [] }: JobRequestFormProps) {
+export default function JobRequestForm({ items, warehouses = [], customers: initialCustomers, operatorName, onSuccess, onClose, thaiAddressData = [], transactions = [], logisticsJobs = [] }: JobRequestFormProps) {
 
  const PREFIX =`ete-job-request-${operatorName}`;
  
@@ -162,11 +165,42 @@ export default function JobRequestForm({ items, warehouses = [], customers: init
  }, [cv, cart, returnCart, note, step, PREFIX, jobId, tempSubItems, tempReturnSubItems, appointmentDate, appointmentTime, warehouseId]);
 
 
- const matchedCustomer = useMemo(() => {
- return (customers || []).find(c => String(c.cv || c.CV || '') === String(cv));
- }, [customers, cv]);
+  const matchedCustomer = useMemo(() => {
+    return (customers || []).find(c => String(c.cv || c.CV || '') === String(cv));
+  }, [customers, cv]);
 
- const [error, setError] = useState<string | null>(null);
+  const customerPossession = useMemo(() => {
+    if (!matchedCustomer) return [];
+    return calculateCustomerInventory(transactions, matchedCustomer.cv, logisticsJobs, items);
+  }, [matchedCustomer, transactions, logisticsJobs, items]);
+
+  const [usePossessionForReturn, setUsePossessionForReturn] = useState(true);
+
+  // Convert possession map back to MaterialItem format for the selector
+  const possessionItems = useMemo(() => {
+    return customerPossession.map((p: any) => {
+      // Find the master item using item_id for 100% accuracy
+      let master = p.item_id ? items.find(i => String(i.id) === String(p.item_id) || String(i.rowIndex) === String(p.item_id) || String(i.item_id) === String(p.item_id)) : null;
+      
+      // Fallback matching if item_id is somehow missing
+      if (!master) {
+        master = items.find(i => {
+            const formatted = `${i.ประเภท || ''} ${i.ยี่ห้อหรือรูปแบบ || i.brand || ''} ${i.รายการ || i.item_name || ''} ${i.รายละเอียด || i.details || ''}`.replace(/\s+/g, ' ').trim() || i.รายการ;
+            return formatted === p.name && (p.size ? i.ขนาด === p.size : true);
+        });
+      }
+
+      if (!master) return null; // Must exist in master list to be returnable
+      
+      return {
+        ...master,
+        available_stock: p.qty, // Mock available stock as the possessed quantity!
+        warehouse_stocks: undefined, // Force selector to use available_stock instead of warehouse stock
+      } as MaterialItem;
+    }).filter(Boolean); // Remove nulls
+  }, [customerPossession, items]);
+
+  const [error, setError] = useState<string | null>(null);
  const [resetKey, setResetKey] = useState(Date.now()); 
 
  const handleSearch = async () => {
@@ -394,7 +428,13 @@ export default function JobRequestForm({ items, warehouses = [], customers: init
  const itemId = Number(rawItem.id || rawItem.rowIndex || rawItem.item_id || 0);
  const key = itemId > 0 ? `id:${itemId}` : `k:${String(rawItem.ประเภท || '')}|${String(rawItem.ยี่ห้อหรือรูปแบบ || '')}|${String(rawItem.รายการ || '')}|${String(rawItem.ขนาด || '')}|${String(rawItem.สภาพ || '')}`;
  const label = `${rawItem.ประเภท || ''} ${rawItem.ยี่ห้อหรือรูปแบบ || ''} ${rawItem.รายการ || ''} ${rawItem.ขนาด || ''}`.replace(/\s+/g, ' ').trim() || 'พัสดุ';
- let available = Number((rawItem as any)?.available_stock ?? 0);
+ let available = 0;
+ if (warehouseId && (rawItem as any)?.warehouse_stocks) {
+   const ws = (rawItem as any).warehouse_stocks.find((w: any) => w.warehouseId === warehouseId);
+   available = ws ? Number(ws.stock || 0) : 0;
+ } else {
+   available = Number((rawItem as any)?.available_stock ?? 0);
+ }
  const prev = requiredByItem.get(key);
  if (prev) prev.required += qty;
  else requiredByItem.set(key, { label, required: qty, available });
@@ -741,12 +781,40 @@ export default function JobRequestForm({ items, warehouses = [], customers: init
  </div>
  </div>
 
- <div className="bg-white rounded-xl border border-slate-100 p-6 space-y-4">
- <div className="flex items-center gap-3 mb-1"><Icon name="inventory" size="sm" /><h3 className="text-[13px] font-black text-slate-900 uppercase">รายการที่เก็บกลับ ({returnCart.length})</h3></div>
- <Suspense fallback={<div className="h-20 bg-slate-50 rounded-2xl" />}>
- <JobRequestItemSelector 
- items={items} 
- cart={returnCart}
+  <div className="bg-white rounded-xl border border-slate-100 p-6 space-y-4">
+    <div className="flex items-center justify-between mb-1">
+      <div className="flex items-center gap-3">
+        <Icon name="inventory" size="sm" />
+        <h3 className="text-[13px] font-black text-slate-900 uppercase">รายการที่เก็บกลับ ({returnCart.length})</h3>
+      </div>
+      
+      {matchedCustomer && customerPossession.length > 0 && (
+        <button 
+          onClick={() => setUsePossessionForReturn(prev => !prev)}
+          className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-colors ${usePossessionForReturn ? 'bg-indigo-50 text-indigo-600 border border-indigo-200' : 'bg-slate-50 text-slate-400 border border-slate-200'}`}
+        >
+          <span className="material-symbols-outlined text-[14px]">
+            {usePossessionForReturn ? 'check_circle' : 'search'}
+          </span>
+          {usePossessionForReturn ? 'เลือกจากพัสดุที่ครอบครอง' : 'ค้นหาจากพัสดุทั้งหมด'}
+        </button>
+      )}
+    </div>
+
+    {usePossessionForReturn && customerPossession.length === 0 && matchedCustomer && (
+      <div className="p-4 bg-amber-50/50 border border-amber-100 rounded-xl flex items-start gap-3">
+        <span className="material-symbols-outlined text-amber-500 text-[20px]">info</span>
+        <div>
+          <p className="text-[12px] font-bold text-amber-800">ไม่พบข้อมูลการครอบครองพัสดุของลูกค้ารายนี้</p>
+          <p className="text-[11px] font-bold text-amber-600/70 mt-0.5">ระบบจะแสดงรายการพัสดุทั้งหมดให้เลือกแทน</p>
+        </div>
+      </div>
+    )}
+
+  <Suspense fallback={<div className="h-20 bg-slate-50 rounded-2xl" />}>
+  <JobRequestItemSelector 
+  items={usePossessionForReturn && customerPossession.length > 0 ? possessionItems : items} 
+  cart={returnCart}
  tempSubItems={tempReturnSubItems}
  action="return" 
  onAddToCart={handleAddToReturnCart} 
@@ -756,6 +824,7 @@ export default function JobRequestForm({ items, warehouses = [], customers: init
  setError={setError}
  error={error}
  warehouseId={warehouseId}
+ limitStock={usePossessionForReturn}
  />
  </Suspense>
  <div className="space-y-4 mt-4">

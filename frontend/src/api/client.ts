@@ -2,13 +2,13 @@
  * API Client — Core HTTP utilities, caching, and error normalization
  */
 
-export let API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3002/api`;
+export let API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3001/api`;
 
 // Force clear storage to prevent ghost connections
 localStorage.removeItem('ete_app_script_url');
 
 export const updateApiUrl = (newUrl: string) => {
-  API_URL = newUrl || import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3002/api`;
+  API_URL = newUrl || import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3001/api`;
 };
 
 export const resetApiUrl = () => {
@@ -17,6 +17,7 @@ export const resetApiUrl = () => {
 };
 
 export let initialDataCache: any = null;
+export const setInitialDataCache = (data: any) => { initialDataCache = data; };
 export const invalidateCache = () => { initialDataCache = null; };
 
 const DB_CONNECTION_ALERT = 'ไม่สามารถติดต่อฐานข้อมูลได้ กรุณาแจ้งผู้ดูแลระบบ';

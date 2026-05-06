@@ -16,10 +16,11 @@ interface ItemSelectorProps {
  fixedCondition?: string; 
  persistenceKey?: string;
  warehouseId?: number;
+ limitStock?: boolean;
 }
 
 const JobRequestItemSelector: React.FC<ItemSelectorProps> = ({
- items, cart, tempSubItems, action, onAddToCart, onAddSubItem, onRemoveSubItem: _onRemoveSubItem, onUpdateSubItemQty, setError, error, fixedCondition, persistenceKey, warehouseId
+ items, cart, tempSubItems, action, onAddToCart, onAddSubItem, onRemoveSubItem: _onRemoveSubItem, onUpdateSubItemQty, setError, error, fixedCondition, persistenceKey, warehouseId, limitStock
 }) => {
  const [type, setType] = useState('');
  const [brand, setBrand] = useState('');
@@ -71,7 +72,11 @@ const JobRequestItemSelector: React.FC<ItemSelectorProps> = ({
  }, [items, cart, tempSubItems, action, warehouseId]);
 
  const getItemStock = (item: MaterialItem) => {
- return Number((item as any)?.available_stock ?? 0);
+   if (warehouseId && (item as any).warehouse_stocks) {
+     const ws = (item as any).warehouse_stocks.find((w: any) => w.warehouseId === warehouseId);
+     return ws ? Number(ws.stock || 0) : 0;
+   }
+   return Number((item as any)?.available_stock ?? 0);
  };
 
  const isSafeItem = (i: any): boolean => !!i && typeof i === 'object' && !Array.isArray(i) && typeof i.ประเภท !== 'undefined';
@@ -232,8 +237,8 @@ const JobRequestItemSelector: React.FC<ItemSelectorProps> = ({
  if (!fixedCondition && action !== 'return' && hasRealOptions(conditionOptions) && !condition) { setError('กรุณาเลือกสภาพ'); return; }
  if (hasRealOptions(sizeOptions) && !size) { setError('กรุณาเลือกขนาด'); return; }
 
- if (action === 'issue' && quantity > totalStock) {
- setError('พัสดุในคลังนี้ไม่พอ');
+ if ((action === 'issue' || limitStock) && quantity > totalStock) {
+ setError('ยอดพัสดุสำหรับทำรายการไม่เพียงพอ');
  return;
  }
 
@@ -298,7 +303,7 @@ const JobRequestItemSelector: React.FC<ItemSelectorProps> = ({
  <label className={inputLabelClass}>ประเภทพัสดุ</label>
  <FormSelect value={type} onChange={e => { setType(e.target.value); setBrand(''); setCondition(fixedCondition || ''); setSize(''); setDetail(''); setItemName(''); setError(''); }}>
  <option value="">-- เลือกประเภท --</option>
- {allTypes.map(t => <option key={t.name} value={t.name}>{t.name} {action !== 'return' &&`(คงเหลือ: ${t.stock.toLocaleString()})`}</option>)}
+ {allTypes.map(t => <option key={t.name} value={t.name}>{t.name} {(action !== 'return' || limitStock) && `(ครอบครอง/คงเหลือ: ${t.stock.toLocaleString()})`}</option>)}
  </FormSelect>
  </div>
 
@@ -310,7 +315,7 @@ const JobRequestItemSelector: React.FC<ItemSelectorProps> = ({
  <label className={inputLabelClass}>ยี่ห้อ</label>
  <FormSelect value={brand} onChange={e => { setBrand(e.target.value); setCondition(fixedCondition || ''); setSize(''); setDetail(''); setItemName(''); }}>
  <option value="">-- เลือกยี่ห้อ --</option>
- {brandOptions.map(b => <option key={b.name} value={b.name}>{b.name} {action !== 'return' &&`(${b.stock.toLocaleString()})`}</option>)}
+ {brandOptions.map(b => <option key={b.name} value={b.name}>{b.name} {(action !== 'return' || limitStock) && `(${b.stock.toLocaleString()})`}</option>)}
  </FormSelect>
  </div>
  )}
@@ -320,7 +325,7 @@ const JobRequestItemSelector: React.FC<ItemSelectorProps> = ({
  <label className={inputLabelClass}>รายการ</label>
  <FormSelect value={itemName} onChange={e => { setItemName(e.target.value); setCondition(fixedCondition || ''); setSize(''); setDetail(''); }}>
  <option value="">-- เลือกรายการ --</option>
- {itemNameOptions.map(n => <option key={n.name} value={n.name}>{n.name} {action !== 'return' &&`(${String(n.stock || 0)})`}</option>)}
+ {itemNameOptions.map(n => <option key={n.name} value={n.name}>{n.name} {(action !== 'return' || limitStock) && `(${String(n.stock || 0)})`}</option>)}
  </FormSelect>
  </div>
  )}
@@ -340,7 +345,7 @@ const JobRequestItemSelector: React.FC<ItemSelectorProps> = ({
  <label className={inputLabelClass}>ขนาด</label>
  <FormSelect value={size} onChange={e => { setSize(e.target.value); setDetail(''); }}>
  <option value="">-- เลือกขนาด --</option>
- {sizeOptions.map(s => <option key={s.name} value={s.name}>{s.name} {action !== 'return' &&`(${String(s.stock || 0)})`}</option>)}
+ {sizeOptions.map(s => <option key={s.name} value={s.name}>{s.name} {(action !== 'return' || limitStock) && `(${String(s.stock || 0)})`}</option>)}
  </FormSelect>
  </div>
  )}
@@ -360,7 +365,7 @@ const JobRequestItemSelector: React.FC<ItemSelectorProps> = ({
  <label className={inputLabelClass}>รายละเอียดเพิ่มเติม</label>
  <FormSelect value={detail} onChange={e => setDetail(e.target.value)}>
  <option value="">-- เลือกรายละเอียด --</option>
- {detailOptions.map(d => <option key={d.name} value={d.name}>{d.name} {action !== 'return' &&`(${d.stock.toLocaleString()})`}</option>)}
+ {detailOptions.map(d => <option key={d.name} value={d.name}>{d.name} {(action !== 'return' || limitStock) && `(${d.stock.toLocaleString()})`}</option>)}
  </FormSelect>
  </div>
  )}
@@ -544,19 +549,19 @@ const JobRequestItemSelector: React.FC<ItemSelectorProps> = ({
  </button>
  <div className="flex flex-col items-center">
  <span className="text-7xl font-black text-slate-900 tabular-nums" key={quantity}>{quantity}</span>
- {action !== 'return' && (
- <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-2">สต็อก: {totalStock.toLocaleString()}</p>
+ {(action !== 'return' || limitStock) && (
+ <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-2">ยอดครอบครอง/สต็อก: {totalStock.toLocaleString()}</p>
  )}
  </div>
  <button 
  type="button"
  onClick={(e) => { 
  e.preventDefault(); 
- if (action === 'issue' && quantity >= totalStock) return;
+ if ((action === 'issue' || limitStock) && quantity >= totalStock) return;
  setQuantity(q => q + 1); 
  }} 
- disabled={action === 'issue' && quantity >= totalStock}
- className={`w-16 h-16 rounded-full bg-white border border-slate-200 flex items-center justify-center text-3xl font-black ${action === 'issue' && quantity >= totalStock ? 'opacity-20 cursor-not-allowed' : 'text-slate-300 '}`}
+ disabled={(action === 'issue' || limitStock) && quantity >= totalStock}
+ className={`w-16 h-16 rounded-full bg-white border border-slate-200 flex items-center justify-center text-3xl font-black ${(action === 'issue' || limitStock) && quantity >= totalStock ? 'opacity-20 cursor-not-allowed' : 'text-slate-300 '}`}
  >
  +
  </button>

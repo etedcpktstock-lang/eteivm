@@ -157,6 +157,7 @@ export const calculateCustomerInventory = (
         detail: enriched.รายละเอียด || enriched.details || '',
         size: enriched.ขนาด || '',
         condition: enriched.สภาพ || 'ปกติ',
+        item_id: enriched.item_id || enriched.rowIndex || enriched.id || null,
         qty: 0 
       };
     }
@@ -176,7 +177,10 @@ export const calculateCustomerInventory = (
     }
   };
 
-  // 1️⃣ Historical Transactions
+  // 1️⃣ Historical Transactions Grouping
+  const txByJob = new Map<string, any[]>();
+  const independentTx: any[] = [];
+
   const sortedTransactions = [...(transactions || [])].sort((a, b) => {
     const da = new Date(a["วัน-เวลา"] || a.Date || 0).getTime();
     const db = new Date(b["วัน-เวลา"] || b.Date || 0).getTime();
@@ -185,24 +189,67 @@ export const calculateCustomerInventory = (
 
   sortedTransactions.forEach(t => {
     if (!checkCvMatch(t.CV || t.cv || t.CustomerID)) return;
-    const tId = getJobId(t);
-
-    // Mark job as seen so logistics section doesn't double-count,
-    // but DON'T skip individual tx rows — each row is qty=1 per unit
-    if (tId) processedJobIds.add(tId);
-
-    const status = String(t.สถานะ || t.Status || '').toUpperCase();
+    const status = String(t.สถานะ || t.Status || t.action_type || '').toUpperCase();
     if (status.includes('ยกเลิก')) return;
 
+    const tId = getJobId(t);
+    if (tId) {
+      if (!txByJob.has(tId)) txByJob.set(tId, []);
+      txByJob.get(tId)!.push(t);
+    } else {
+      independentTx.push(t);
+    }
+  });
+
+  // Process independent transactions (no Job ID)
+  independentTx.forEach(t => {
+    const status = String(t.สถานะ || t.Status || t.action_type || '').toUpperCase();
     const enriched = enrichItem(t);
     const category = classifyLogisticsItem(status);
     const qty = Number(t.จำนวน || t.qty || t.Quantity || 0);
 
     if (status.includes('ส่ง') || category === 'SEND') {
-      addToMap(enriched, qty, t.สถานะ, t["วัน-เวลา"]);
+      addToMap(enriched, qty, t.สถานะ || t.action_type, t["วัน-เวลา"]);
     } else if (status.includes('คืน') || category === 'RETURN') {
       subtractFromMap(enriched, qty);
     }
+  });
+
+  // Process transactions with Job ID using aggregateJobItems to deduplicate Plan/Result rows
+  txByJob.forEach((txGroup, jId) => {
+    processedJobIds.add(jId); // Mark as processed so logisticsJobs won't process it again
+
+    const normalizedGroup = txGroup.map(t => ({
+      ...t,
+      action_type: t.action_type || t.action || t.สถานะ || t.Status,
+      quantity: Number(t.จำนวน || t.qty || t.Quantity || 1)
+    }));
+
+    const latestTx = normalizedGroup[normalizedGroup.length - 1];
+    const inferredJobStatus = latestTx.action_type;
+
+    const { allAggregated } = aggregateJobItems(normalizedGroup, inferredJobStatus);
+    
+    allAggregated.forEach(agg => {
+      // Only add to inventory if it's confirmed (not just a plan)
+      const js = String(agg.status || inferredJobStatus || '').toUpperCase();
+      const isConfirmed = [
+        'เสร็จ', 'สำเร็จ', 'SUCCESS', 'CLOSED', 'ตรวจสอบแล้ว',
+        'คืน', 'กลับ', 'RETURN', 'TRANSIT_BACK', 'ARRIVED_OFFICE',
+        'ARRIVED', 'DELIVERED', 'ส่งมอบ', 'เรียบร้อย'
+      ].some(k => js.includes(k.toUpperCase()));
+
+      // If it's just 'แจ้งส่ง' and not confirmed, we don't add to customer possession yet.
+      // Customer possession should only reflect items actually delivered.
+      if (!isConfirmed && !js.includes('ส่งแล้ว')) return;
+
+      const enriched = enrichItem(agg.it);
+      if (agg.category === 'SEND') {
+        addToMap(enriched, agg.totalQty, agg.status || latestTx.action_type, latestTx["วัน-เวลา"] || latestTx.Date);
+      } else if (agg.category === 'RETURN') {
+        subtractFromMap(enriched, agg.totalQty);
+      }
+    });
   });
 
   // 2️⃣ Logistics Jobs
