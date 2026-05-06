@@ -186,7 +186,9 @@ export const calculateCustomerInventory = (
   sortedTransactions.forEach(t => {
     if (!checkCvMatch(t.CV || t.cv || t.CustomerID)) return;
     const tId = getJobId(t);
-    if (tId && processedJobIds.has(tId)) return;
+
+    // Mark job as seen so logistics section doesn't double-count,
+    // but DON'T skip individual tx rows — each row is qty=1 per unit
     if (tId) processedJobIds.add(tId);
 
     const status = String(t.สถานะ || t.Status || '').toUpperCase();

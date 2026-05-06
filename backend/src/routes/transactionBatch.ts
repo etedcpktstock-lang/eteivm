@@ -103,7 +103,10 @@ router.post('/processBatch', async (req, res) => {
                 const isFulfillReturnItem = isFulfillReturnToBaseItem || isFulfillPickupReturnItem;
                 const isFulfillDeliveryItem = effectiveAction === 'fulfill' && !isFulfillReturnItem && statusMatches(itemStatus, JOB_STATUS.COMPLETED);
                 const isFulfillingDelivery = (effectiveAction === 'issue' && (statusMatches(itemStatus, JOB_STATUS.COMPLETED) || statusMatches(globalStatus, JOB_STATUS.COMPLETED))) || isFulfillDeliveryItem;
-                const isReturningToBase = ((effectiveAction === 'return' || effectiveAction === 'receive') && (statusMatches(globalStatus, JOB_STATUS.RETURNED_TO_BASE) || itemStatus.includes('รอตรวจ'))) || isFulfillReturnToBaseItem;
+                const isReturningToBase = (
+                    (effectiveAction !== 'fulfill' && (effectiveAction === 'return' || effectiveAction === 'receive') && (statusMatches(globalStatus, JOB_STATUS.RETURNED_TO_BASE) || itemStatus.includes('รอตรวจ')))
+                    || isFulfillReturnToBaseItem
+                );
                 const isPickingUpToTransit = !isReturningToBase && ((effectiveAction === 'return' && statusMatches(globalStatus, JOB_STATUS.PICKUP)) || isFulfillPickupReturnItem);
 
                 let stockChange = 0, repairChange = 0, scrapChange = 0, lostChange = 0, quarantineChange = 0, transitChange = 0;
@@ -260,7 +263,8 @@ router.post('/processBatch', async (req, res) => {
             if (jobRecord.job_type === 'RETURN' && !isStatusOnly) {
                 const allTxns = await tx.transaction.findMany({ where: { job_id: finalJobId } });
                 const totalRequested = allTxns.filter(t => t.action_type === 'แจ้งคืน').reduce((sum, t) => sum + t.quantity, 0);
-                const totalProcessed = allTxns.filter(t => ['รอตรวจ', 'รับคืน', 'สูญหาย', 'ชำรุดหนัก', 'ชำรุดหนัก/ซาก'].includes(t.action_type)).reduce((sum, t) => sum + t.quantity, 0);
+                const processKeywords = ['รอตรวจ', 'รับคืน', 'สูญหาย', 'ชำรุดหนัก', 'ชำรุดหนัก/ซาก', 'รอตรวจสอบ'];
+                const totalProcessed = allTxns.filter(t => processKeywords.some(k => (t.action_type || '').includes(k))).reduce((sum, t) => sum + t.quantity, 0);
                 const hasLoss = allTxns.some(t => ['สูญหาย', 'ชำรุดหนัก', 'ชำรุดหนัก/ซาก'].includes(t.action_type));
                 let finalStatus = status;
                 if (totalProcessed === 0) {
