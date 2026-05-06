@@ -232,7 +232,7 @@ export const calculateCustomerInventory = (
     
     allAggregated.forEach(agg => {
       // Only add to inventory if it's confirmed (not just a plan)
-      const js = String(agg.status || inferredJobStatus || '').toUpperCase();
+      const js = String((agg as any).status || inferredJobStatus || '').toUpperCase();
       const isConfirmed = [
         'เสร็จ', 'สำเร็จ', 'SUCCESS', 'CLOSED', 'ตรวจสอบแล้ว',
         'คืน', 'กลับ', 'RETURN', 'TRANSIT_BACK', 'ARRIVED_OFFICE',
@@ -245,7 +245,7 @@ export const calculateCustomerInventory = (
 
       const enriched = enrichItem(agg.it);
       if (agg.category === 'SEND') {
-        addToMap(enriched, agg.totalQty, agg.status || latestTx.action_type, latestTx["วัน-เวลา"] || latestTx.Date);
+        addToMap(enriched, agg.totalQty, (agg as any).status || latestTx.action_type, latestTx["วัน-เวลา"] || latestTx.Date);
       } else if (agg.category === 'RETURN') {
         subtractFromMap(enriched, agg.totalQty);
       }

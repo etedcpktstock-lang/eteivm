@@ -180,11 +180,11 @@ export default function JobRequestForm({ items, warehouses = [], customers: init
   const possessionItems = useMemo(() => {
     return customerPossession.map((p: any) => {
       // Find the master item using item_id for 100% accuracy
-      let master = p.item_id ? items.find(i => String(i.id) === String(p.item_id) || String(i.rowIndex) === String(p.item_id) || String(i.item_id) === String(p.item_id)) : null;
+      let master = p.item_id ? items.find((i: any) => String(i.id) === String(p.item_id) || String(i.rowIndex) === String(p.item_id) || String(i.item_id) === String(p.item_id)) : null;
       
       // Fallback matching if item_id is somehow missing
       if (!master) {
-        master = items.find(i => {
+        master = items.find((i: any) => {
             const formatted = `${i.ประเภท || ''} ${i.ยี่ห้อหรือรูปแบบ || i.brand || ''} ${i.รายการ || i.item_name || ''} ${i.รายละเอียด || i.details || ''}`.replace(/\s+/g, ' ').trim() || i.รายการ;
             return formatted === p.name && (p.size ? i.ขนาด === p.size : true);
         });

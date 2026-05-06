@@ -317,51 +317,60 @@ const jobItems = actionType === 'status_only' ? [] : job.items.map((it: any) => 
  );
  }
 
- return (
- <div className="min-h-screen bg-[#f8fafc] pb-32">
- <div className="h-44 bg-white border-b border-slate-200">
- <div className="px-3 pt-12 pb-24 flex flex-col gap-1 items-start max-w-4xl mx-auto">
- <div className="mobile-row flex items-center justify-between w-full">
- <div className="flex items-center gap-3">
- <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-indigo-600 border border-indigo-100">
- <Truck size={20} />
- </div>
- <div className="flex flex-col">
- <h1 className="mobile-form-hero-title">ระบบจัดการขนส่ง</h1>
- <p className="mobile-form-hero-subtitle mt-1">ศูนย์ควบคุมการขนส่ง</p>
- </div>
- </div>
+  return (
+  <div className="min-h-screen bg-slate-50 pb-32 font-sans selection:bg-indigo-500/30">
+  <div className="relative h-56 bg-gradient-to-br from-indigo-900 via-indigo-800 to-violet-900 overflow-hidden">
+  {/* Abstract Background Patterns */}
+  <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-20 pointer-events-none">
+    <div className="absolute -top-24 -left-24 w-96 h-96 bg-indigo-500 rounded-full mix-blend-screen filter blur-[80px] animate-pulse" style={{ animationDuration: '8s' }}></div>
+    <div className="absolute top-10 -right-20 w-80 h-80 bg-violet-400 rounded-full mix-blend-screen filter blur-[100px] animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }}></div>
+  </div>
 
- {/* 📍 Sync Status Badge */}
- <div className="flex flex-col items-end gap-1.5">
- <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${(loading || globalLoading) ? 'bg-amber-50 border-amber-100' : 'bg-emerald-50 border-emerald-100'}`}>
- <div className={`w-2 h-2 rounded-full ${(loading || globalLoading) ? 'bg-amber-500' : 'bg-emerald-500'}`} />
- <span className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 ${(loading || globalLoading) ? 'text-amber-600' : 'text-emerald-600'}`}>
- {(loading || globalLoading) ? 'Syncing...' : 'Live'}
- {(loading || globalLoading) && <RefreshCw size={10} />}
- </span>
- </div>
- <div className="flex items-center gap-2">
- <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">ล่าสุด: {lastSyncTime}</p>
- <button
- onClick={() => fetchJobs(true)}
- disabled={loading || globalLoading}
- className={`material-symbols-outlined text-[14px] text-slate-400 ${(loading || globalLoading) ? '' : ''}`}
- >
- refresh
- </button>
- </div>
- </div>
- </div>
- <div className="flex flex-wrap gap-2 text-slate-400 text-[9px] font-black uppercase tracking-widest">
- <span className="px-2 py-0.5 bg-slate-100 rounded-md border border-slate-200/50">ผู้ดำเนินการ: {operatorName}</span>
- </div>
- </div>
- </div>
+  <div className="relative px-4 pt-14 pb-24 flex flex-col gap-1 items-start max-w-4xl mx-auto z-10">
+  <div className="mobile-row flex items-center justify-between w-full">
+  <div className="flex items-center gap-4">
+  <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center text-white border border-white/20 shadow-xl">
+  <Truck size={24} strokeWidth={2.5} />
+  </div>
+  <div className="flex flex-col">
+  <h1 className="text-2xl font-black text-white tracking-tight drop-shadow-md">ระบบจัดการขนส่ง</h1>
+  <p className="text-[12px] font-bold text-indigo-200 mt-0.5 tracking-wide uppercase">ศูนย์ควบคุมการขนส่ง</p>
+  </div>
+  </div>
 
- {/* 🗂 Compact Tab Switcher */}
- <div className="flex justify-center -mt-10 px-3 relative z-20 max-w-4xl mx-auto w-full">
- <div className="bg-white p-1 rounded-xl border border-slate-200 flex items-center gap-1 w-full overflow-hidden">
+  {/* 📍 Sync Status Badge (Glassmorphism) */}
+  <div className="flex flex-col items-end gap-1.5">
+  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border backdrop-blur-md transition-all duration-300 shadow-lg ${(loading || globalLoading) ? 'bg-amber-500/20 border-amber-400/30' : 'bg-emerald-500/20 border-emerald-400/30'}`}>
+  <div className={`w-2 h-2 rounded-full animate-pulse ${(loading || globalLoading) ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]' : 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]'}`} />
+  <span className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 ${(loading || globalLoading) ? 'text-amber-200' : 'text-emerald-100'}`}>
+  {(loading || globalLoading) ? 'Syncing...' : 'Live'}
+  {(loading || globalLoading) && <RefreshCw size={10} className="animate-spin" />}
+  </span>
+  </div>
+  <div className="flex items-center gap-2">
+  <p className="text-[9px] font-bold text-indigo-300/80 uppercase tracking-tighter">ล่าสุด: {lastSyncTime}</p>
+  <button
+  onClick={() => fetchJobs(true)}
+  disabled={loading || globalLoading}
+  className={`material-symbols-outlined text-[14px] text-indigo-200 hover:text-white transition-colors duration-200 ${(loading || globalLoading) ? 'animate-spin' : ''}`}
+  >
+  refresh
+  </button>
+  </div>
+  </div>
+  </div>
+  <div className="flex flex-wrap gap-2 text-indigo-100 text-[10px] font-bold tracking-wider mt-4">
+  <span className="px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full border border-white/10 flex items-center gap-1.5 shadow-sm">
+    <div className="w-1.5 h-1.5 rounded-full bg-indigo-300"></div>
+    ผู้ดำเนินการ: <span className="font-black">{operatorName}</span>
+  </span>
+  </div>
+  </div>
+  </div>
+
+ {/* 🗂 Floating Tab Switcher */}
+ <div className="flex justify-center -mt-8 px-4 relative z-20 max-w-4xl mx-auto w-full">
+ <div className="bg-white/90 backdrop-blur-xl p-1.5 rounded-2xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex items-center gap-1 w-full overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
  {[
  {
  id: 'waiting',
@@ -385,12 +394,12 @@ const jobItems = actionType === 'status_only' ? [] : job.items.map((it: any) => 
  <button
  key={tab.id}
  onClick={() => setActiveTab(tab.id as any)}
- className={`flex-1 flex flex-col items-center gap-1 py-3 rounded-lg relative ${activeTab === tab.id ? 'bg-slate-900 text-white' : 'text-slate-500 bg-slate-50' }`}
+ className={`flex-1 flex flex-col items-center gap-1.5 py-3.5 rounded-xl relative transition-all duration-300 overflow-hidden ${activeTab === tab.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 scale-[1.02]' : 'text-slate-500 hover:bg-slate-50 hover:text-indigo-600' }`}
  >
- <tab.icon size={15} className={activeTab === tab.id ? 'text-indigo-400' : ''} />
- <span className="text-[10px] font-black tracking-tight">{tab.label}</span>
+ <tab.icon size={18} className={`transition-colors duration-300 ${activeTab === tab.id ? 'text-indigo-100' : ''}`} />
+ <span className="text-[11px] font-black tracking-wide">{tab.label}</span>
  {tab.count > 0 && activeTab !== tab.id && (
- <span className="absolute top-1 right-2 w-4 h-4 bg-rose-500 text-white text-[8px] font-black rounded-md flex items-center justify-center border border-white">
+ <span className="absolute top-2 right-3 w-5 h-5 bg-rose-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-sm animate-bounce" style={{ animationIterationCount: 3 }}>
  {tab.count}
  </span>
  )}
@@ -485,19 +494,19 @@ const jobItems = actionType === 'status_only' ? [] : job.items.map((it: any) => 
  <span className="text-[9px] text-slate-400 font-bold">S/N หรือ Asset Tag</span>
  </div>
  <div className="flex items-center gap-2">
- <input
- type="text"
- value={assetQuery}
- onChange={(e) => setAssetQuery(e.target.value)}
- onKeyDown={(e) => { if (e.key === 'Enter') handleAssetLookup(); }}
- placeholder="เช่น AST-... หรือ SN..."
- className="flex-1 h-11 bg-slate-50 border border-slate-200 rounded-xl px-4 text-[13px] font-bold text-slate-700 outline-none focus:border-indigo-300"
- />
- <button
- onClick={handleAssetLookup}
- disabled={assetLoading}
- className="btn no-animation h-11 px-4 bg-slate-900 text-white rounded-xl text-[11px] font-black uppercase tracking-wider disabled:opacity-50"
- >
+  <input
+  type="text"
+  value={assetQuery}
+  onChange={(e) => setAssetQuery(e.target.value)}
+  onKeyDown={(e) => { if (e.key === 'Enter') handleAssetLookup(); }}
+  placeholder="เช่น AST-... หรือ SN..."
+  className="flex-1 h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-[13px] font-bold text-slate-700 outline-none focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-300"
+  />
+  <button
+  onClick={handleAssetLookup}
+  disabled={assetLoading}
+  className="btn no-animation h-12 px-5 bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-500/30 rounded-xl text-[11px] font-black uppercase tracking-wider disabled:opacity-50 transition-all duration-300"
+  >
  {assetLoading ? 'ค้นหา...' : 'ค้นหา'}
  </button>
  </div>
@@ -522,18 +531,18 @@ const jobItems = actionType === 'status_only' ? [] : job.items.map((it: any) => 
  <div className="relative group w-full flex items-center gap-2">
  <div className="relative flex-1 group">
  <Search size={18} className="absolute left-6 top-1/2 text-slate-300 group-focus-within:text-indigo-600" />
- <input
- type="text"
- placeholder="ค้นหาตามเลขที่งานหรือชื่อลูกค้า..."
- value={searchTerm}
- onChange={(e) => setSearchTerm(e.target.value)}
- className="w-full h-14 bg-white border border-slate-200 rounded-full pl-16 pr-6 font-bold text-slate-700 outline-none focus:border-indigo-500/20 placeholder:text-slate-300"
- />
+  <input
+  type="text"
+  placeholder="ค้นหาตามเลขที่งานหรือชื่อลูกค้า..."
+  value={searchTerm}
+  onChange={(e) => setSearchTerm(e.target.value)}
+  className="w-full h-14 bg-white border border-slate-200 hover:border-slate-300 rounded-full pl-16 pr-6 font-bold text-slate-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-300 placeholder:text-slate-300 shadow-sm"
+  />
  </div>
- <button className="btn no-animation h-14 px-8 bg-indigo-600 text-white rounded-full flex items-center justify-center gap-2 font-black text-[13px] uppercase shrink-0">
- <Search size={18} />
- <span>ค้นหา</span>
- </button>
+  <button className="btn no-animation h-14 px-8 bg-slate-900 text-white hover:bg-black rounded-full flex items-center justify-center gap-2 font-black text-[13px] uppercase shrink-0 transition-colors duration-300 shadow-md">
+  <Search size={18} />
+  <span>ค้นหา</span>
+  </button>
  </div>
 
  {filteredJobs.length === 0 ? (
@@ -550,10 +559,10 @@ const jobItems = actionType === 'status_only' ? [] : job.items.map((it: any) => 
  <div
  key={job.jobId}
  onClick={() => setExpandedJobId(expandedJobId === job.jobId ? null : job.jobId)}
- className="bg-white border border-slate-200 rounded-xl overflow-hidden group cursor-pointer"
+ className={`bg-white border border-slate-200 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] ${expandedJobId === job.jobId ? 'ring-2 ring-indigo-500/20 shadow-xl' : 'shadow-sm'}`}
  >
  {/* Visual Status Bar */}
- <div className={`h-1 w-full ${job.status?.includes('หน้าร้าน') ? 'bg-purple-500' : job.status?.includes('เดินทาง') ? 'bg-teal-500' : job.status?.includes('เบิกออก') ? 'bg-amber-500' : 'bg-emerald-500' }`} />
+ <div className={`h-1.5 w-full bg-gradient-to-r ${job.status?.includes('หน้าร้าน') ? 'from-purple-500 to-fuchsia-500' : job.status?.includes('เดินทาง') ? 'from-teal-400 to-emerald-500' : job.status?.includes('เบิกออก') ? 'from-amber-400 to-orange-500' : 'from-indigo-500 to-violet-500' }`} />
 
  <div className="p-4">
  <div className="flex justify-between items-start mb-3 gap-3">
@@ -765,12 +774,12 @@ const jobItems = actionType === 'status_only' ? [] : job.items.map((it: any) => 
  handleUpdateStatus(job, 'ACCEPTED', 'status_only');
  }}
  disabled={!!actionLoading}
- className="relative w-full h-12 bg-indigo-600 text-white rounded-full mobile-row flex items-center justify-between px-1.5 font-black text-[13px] uppercase tracking-[0.1em] group overflow-hidden disabled:opacity-70"
+ className="relative w-full h-14 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-2xl mobile-row flex items-center justify-between px-2 font-black text-[13px] uppercase tracking-[0.1em] overflow-hidden disabled:opacity-70 transition-all duration-300 hover:shadow-[0_8px_30px_rgba(79,70,229,0.3)] hover:-translate-y-0.5 group"
  >
- <div className="absolute inset-0"></div>
- <span className="pl-5 relative z-10">{actionLoading === job.jobId ? 'กำลังโหลด...' : 'รับงาน'}</span>
- <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white relative z-10 border border-white/10">
- {actionLoading === job.jobId ? <RefreshCw size={16} className="" /> : <Truck size={16} strokeWidth={2.5} />}
+ <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
+ <span className="pl-6 relative z-10">{actionLoading === job.jobId ? 'กำลังโหลด...' : 'รับงาน'}</span>
+ <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white relative z-10 border border-white/30 shadow-inner group-hover:scale-110 transition-transform duration-300">
+ {actionLoading === job.jobId ? <RefreshCw size={18} className="animate-spin" /> : <Truck size={18} strokeWidth={2.5} />}
  </div>
  </button>
  )}
@@ -1012,31 +1021,7 @@ className={`relative w-full h-12 ${hasUnissuedDelivery ? 'bg-amber-600 border-am
  )}
  </div>
 
- <div className="fixed bottom-10 left-6 right-6 z-40">
- <div className="bg-slate-900/90 px-8 py-5 rounded-[2.5rem] border border-white/10 mobile-row flex items-center justify-between overflow-hidden">
- <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/20 pointer-events-none" />
 
- <div className="flex items-center gap-4 relative">
- <div className="w-10 h-10 bg-indigo-500 rounded-2xl flex items-center justify-center text-white">
- <FileText size={18} />
- </div>
- <div>
- <p className="text-[10px] font-black text-white/40 uppercase tracking-widest leading-none mb-1.5">งานที่ต้องจัดการ</p>
- <p className="text-[17px] font-black text-white leading-none">
- {filteredJobs.length} {activeTab === 'waiting' ? 'งานค้างอยู่' : activeTab === 'active' ? 'กำลังดำเนินการ' : 'เสร็จสมบูรณ์'}
- </p>
- </div>
- </div>
-
- <button
- onClick={() => fetchJobs(false)}
- disabled={loading}
- className="w-11 h-11 bg-white/10 rounded-2xl flex items-center justify-center text-white relative"
- >
- <RefreshCw size={20} className={loading ? '' : ''} />
- </button>
- </div>
- </div>
  
  <style>{`
  ::-webkit-scrollbar {
