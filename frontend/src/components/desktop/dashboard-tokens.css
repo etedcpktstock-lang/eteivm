@@ -1,0 +1,32 @@
+/* Dashboard shared style tokens — reduce inline style duplication */
+
+/* ---- subtle metadata ---- */
+.dash-subtle { font-size: 11px; color: #94a3b8; font-weight: 600; }
+.dash-hint { font-size: 10px; color: #94a3b8; }
+.dash-label { font-size: 11px; font-weight: 700; color: #475569; }
+.dash-label-sm { font-size: 10px; font-weight: 700; color: #64748b; }
+
+/* ---- values ---- */
+.dash-val { font-size: 18px; font-weight: 800; color: #0f172a; }
+.dash-val-lg { font-size: 20px; font-weight: 800; color: #1e293b; }
+.dash-val-sm { font-size: 16px; font-weight: 800; }
+
+/* ---- cards & surfaces ---- */
+.dash-surface { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; }
+.dash-surface-pad { padding: 8px 10px; }
+.dash-card-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.dash-section-pad { padding: 8px 16px 16px 16px; }
+
+/* ---- icon containers ---- */
+.dash-icon-box { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.dash-rank-badge { width: 28px; height: 28px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; background: #dbeafe; color: #1d4ed8; }
+
+/* ---- pill badges ---- */
+.dash-pill { border-radius: 999px; padding: 3px 8px; font-size: 10px; font-weight: 800; white-space: nowrap; }
+
+/* ---- empty state ---- */
+.dash-empty { padding: 32px 0; text-align: center; color: #64748b; font-size: 12px; }
+
+/* ---- chart legend dot ---- */
+.dash-legend-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.dash-legend-dot-round { width: 10px; height: 10px; border-radius: 999px; display: inline-block; }

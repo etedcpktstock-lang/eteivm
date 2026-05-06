@@ -1,0 +1,42 @@
+/* Keyframes for Login Glassmorphism */
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shine {
+  100% {
+    transform: translateX(150%) skewX(-20deg);
+  }
+}
+
+/* Background elements built from Ollama's Draft */
+.login-bg-orb-blue {
+  background-color: rgba(59, 130, 246, 0.2);
+  filter: blur(100px);
+}
+
+.login-bg-orb-indigo {
+  background-color: rgba(99, 102, 241, 0.2);
+  filter: blur(120px);
+  animation-delay: 2s;
+}
+
+.login-noise-overlay {
+  background-image: url('https://grainy-gradients.vercel.app/noise.svg');
+}
+
+/* Animations extracted from JS style tags */
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.hover-shine-effect:hover {
+  animation: shine 0.75s;
+}

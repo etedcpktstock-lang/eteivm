@@ -1,0 +1,17 @@
+{
+  "name": "Inventory Management System for eTe",
+  "short_name": "eTe IMS",
+  "description": "Inventory Management System for eTe",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f8f9fc",
+  "theme_color": "#191c1e",
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

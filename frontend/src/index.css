@@ -1,0 +1,406 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* DaisyUI simple corporate mode */
+@layer base {
+  :root,
+  [data-theme="corporate"] {
+    --rounded-box: 0.75rem;
+    --rounded-btn: 0.5rem;
+    --rounded-badge: 0.5rem;
+  }
+}
+
+html {
+  font-size: 80%;
+  /* Scales everything down to 80% size */
+}
+
+@layer base {
+  body {
+    @apply bg-white text-[#1e293b] min-h-screen overflow-x-hidden;
+    font-family: 'Inter', 'IBM Plex Sans Thai', 'Prompt', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+}
+
+@layer components {
+  .clean-panel {
+    @apply bg-white border border-slate-100 rounded-2xl;
+  }
+
+  .flat-panel {
+    @apply bg-white border border-slate-100 rounded-3xl shadow-sm;
+  }
+
+  .flat-border {
+    @apply border border-slate-200/60;
+  }
+
+  .minimal-input {
+    @apply bg-slate-50 border border-transparent rounded-2xl px-6 py-4 font-bold text-slate-800 focus:bg-white focus:border-sky-500/20 outline-none;
+  }
+
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    vertical-align: middle;
+  }
+}
+
+/* Minimal Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
+}
+
+/* Utility: hide scrollbar but keep scrolling */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Hide number input spinners */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  appearance: textfield;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleUp {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+.animate-scale-up {
+  animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Plain UI mode: no animation, no transition, no interactive effects */
+*,
+*::before,
+*::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+button,
+.btn,
+[role="button"] {
+  box-shadow: none !important;
+}
+
+button:active,
+.btn:active,
+[role="button"]:active {
+  transform: none !important;
+}
+
+/* Mobile consistency pass: spacing/font/button sizing */
+.mobile-plain-scope {
+  font-size: 14px;
+}
+
+.mobile-plain-scope .btn,
+.mobile-plain-scope button.btn {
+  @apply rounded-xl min-h-11 px-4 text-[14px] font-semibold;
+}
+
+.mobile-plain-scope .alert {
+  @apply rounded-xl text-[14px] leading-5;
+}
+
+.mobile-plain-scope .card {
+  @apply rounded-2xl;
+}
+
+.mobile-plain-scope h1,
+.mobile-plain-scope h2,
+.mobile-plain-scope h3,
+.mobile-plain-scope h4 {
+  @apply tracking-normal;
+}
+
+.mobile-plain-scope label {
+  @apply text-[12px] font-semibold text-base-content opacity-70;
+}
+
+.mobile-plain-scope input:not([type="checkbox"]):not([type="radio"]),
+.mobile-plain-scope select,
+.mobile-plain-scope textarea {
+  @apply h-11 rounded-xl border border-base-300 bg-base-100 px-3 text-[14px] font-medium text-base-content;
+}
+
+.mobile-plain-scope textarea {
+  min-height: 5.5rem;
+  padding-top: 0.625rem;
+}
+
+.mobile-plain-scope .form-section,
+.mobile-plain-scope .clean-panel,
+.mobile-plain-scope .flat-panel {
+  @apply p-4 md:p-5;
+}
+
+.mobile-plain-scope .field-stack > * + * {
+  margin-top: 0.625rem;
+}
+
+/* Mobile typography consistency pass */
+.mobile-plain-scope h1 {
+  font-size: 1.25rem;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.mobile-plain-scope h2 {
+  font-size: 1.125rem;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+.mobile-plain-scope h3 {
+  font-size: 1rem;
+  line-height: 1.45;
+  font-weight: 600;
+}
+
+.mobile-plain-scope h4 {
+  font-size: 0.95rem;
+  line-height: 1.45;
+  font-weight: 600;
+}
+
+.mobile-plain-scope [class*="text-3xl"],
+.mobile-plain-scope [class*="text-4xl"] {
+  letter-spacing: 0;
+  font-weight: 700;
+}
+
+/* Normalize arbitrary text sizes used across legacy mobile pages */
+.mobile-plain-scope [class*="text-[8px]"],
+.mobile-plain-scope [class*="text-[9px]"],
+.mobile-plain-scope [class*="text-[10px]"] {
+  font-size: 0.75rem !important;
+  line-height: 1.2rem !important;
+}
+
+.mobile-plain-scope [class*="text-[11px]"],
+.mobile-plain-scope [class*="text-[12px]"] {
+  font-size: 0.8125rem !important;
+  line-height: 1.25rem !important;
+}
+
+.mobile-plain-scope [class*="text-[13px]"],
+.mobile-plain-scope [class*="text-[14px]"],
+.mobile-plain-scope [class*="text-[15px]"],
+.mobile-plain-scope [class*="text-[16px]"] {
+  font-size: 0.875rem !important;
+  line-height: 1.35rem !important;
+}
+
+.mobile-plain-scope .tracking-widest,
+.mobile-plain-scope .tracking-wider {
+  letter-spacing: 0.02em !important;
+}
+
+/* Micro consistency: border thickness + control height */
+.mobile-plain-scope .btn {
+  height: 2.75rem !important;
+  min-height: 2.75rem !important;
+  padding-left: 0.875rem !important;
+  padding-right: 0.875rem !important;
+  border-width: 1px !important;
+  border-radius: 0.75rem !important;
+}
+
+.mobile-app-shell {
+  @apply min-h-screen bg-base-200 text-base-content;
+}
+
+.mobile-app-header {
+  @apply sticky top-0 z-40 border-b border-base-300 bg-base-100 backdrop-blur px-4 pt-5 pb-3;
+}
+
+.mobile-app-title {
+  @apply text-xl font-bold text-base-content tracking-normal;
+}
+
+.mobile-app-subtitle {
+  @apply text-[12px] font-semibold text-base-content opacity-60;
+}
+
+.mobile-chip {
+  @apply inline-flex items-center gap-1 rounded-full border border-base-300 bg-base-100 px-3 py-1 text-[12px] font-semibold text-base-content opacity-70;
+}
+
+.mobile-quick-grid {
+  @apply grid grid-cols-2 gap-3;
+}
+
+.mobile-page-frame {
+  @apply mx-auto w-full max-w-[1200px] px-4 py-4 pb-24 text-left;
+}
+
+.mobile-surface-card {
+  @apply rounded-2xl border border-base-300 bg-base-100 shadow-none;
+}
+
+.mobile-toolbar-card {
+  @apply rounded-2xl border border-base-300 bg-base-100 p-4;
+}
+
+.mobile-form-hero {
+  @apply rounded-2xl border border-base-300 bg-base-100 px-4 py-5;
+}
+
+.mobile-form-hero-title {
+  @apply text-[20px] font-bold text-base-content leading-tight;
+}
+
+.mobile-form-hero-subtitle {
+  @apply mt-1 text-[12px] font-medium text-base-content opacity-60;
+}
+
+.mobile-menu-card {
+  @apply rounded-2xl border border-base-300 bg-base-100 p-4 text-left shadow-none;
+}
+
+.mobile-menu-card-icon {
+  @apply mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-base-200 text-base-content;
+}
+
+.app-spinner,
+.app-spinner-sm,
+.app-spinner-lg {
+  @apply inline-block align-middle text-primary;
+}
+
+.app-spinner {
+  @apply loading loading-spinner loading-md;
+}
+
+.app-spinner-sm {
+  @apply loading loading-spinner loading-sm;
+}
+
+.app-spinner-lg {
+  @apply loading loading-spinner loading-lg;
+}
+
+.mobile-plain-scope .btn.btn-circle {
+  width: 2.75rem !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.mobile-plain-scope .input,
+.mobile-plain-scope .select,
+.mobile-plain-scope textarea,
+.mobile-plain-scope input:not([type="checkbox"]):not([type="radio"]),
+.mobile-plain-scope select {
+  height: 2.75rem !important;
+  min-height: 2.75rem !important;
+  border-width: 1px !important;
+  border-radius: 0.75rem !important;
+}
+
+.mobile-plain-scope textarea {
+  min-height: 5.5rem !important;
+  height: auto !important;
+}
+
+.mobile-plain-scope .card,
+.mobile-plain-scope .clean-panel,
+.mobile-plain-scope .flat-panel {
+  border-width: 1px !important;
+}
+
+/* Row alignment consistency for header/action bars */
+.mobile-plain-scope .mobile-row {
+  align-items: center !important;
+  gap: 0.75rem;
+}
+
+.mobile-plain-scope .mobile-row > .btn {
+  flex-shrink: 0;
+}
+
+/* Meta/label baseline consistency in list cards */
+.mobile-plain-scope [class*="px-2"][class*="py-0.5"],
+.mobile-plain-scope [class*="px-2"][class*="py-1"] {
+  border-radius: 0.5rem !important;
+  font-size: 0.75rem !important;
+  line-height: 1rem !important;
+  font-weight: 600 !important;
+}
+
+.mobile-plain-scope [class*="text-[10px]"][class*="flex"][class*="items-center"],
+.mobile-plain-scope [class*="text-[11px]"][class*="flex"][class*="items-center"] {
+  line-height: 1.2rem !important;
+  gap: 0.375rem !important;
+}
+
+.mobile-plain-scope [class*="leading-snug"] {
+  line-height: 1.35 !important;
+}
+
+/* Final polish: normalize uppercase-heavy labels without touching logic */
+.mobile-plain-scope [class*="uppercase"][class*="text-[9px]"],
+.mobile-plain-scope [class*="uppercase"][class*="text-[10px]"],
+.mobile-plain-scope [class*="uppercase"][class*="text-[11px]"] {
+  letter-spacing: 0.015em !important;
+  font-weight: 600 !important;
+}
+
+.mobile-plain-scope [class*="text-[13px]"][class*="font-black"],
+.mobile-plain-scope [class*="text-[14px]"][class*="font-black"],
+.mobile-plain-scope [class*="text-[15px]"][class*="font-black"] {
+  font-weight: 700 !important;
+}

@@ -1,0 +1,247 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ═══════════════════════════════════════
+//  🔐 Authentication & Users
+// ═══════════════════════════════════════
+
+model User {
+  id           Int       @id @default(autoincrement())
+  username     String    @unique
+  password     String    // bcrypt hashed
+  name         String
+  role         String    // ADMIN, OPERATOR, VIEWER
+  ip_address   String?
+  location     String?
+  last_seen    DateTime?
+  logs         AuditLog[]
+  jobs         Job[]
+  transactions Transaction[]
+}
+
+model RolePermission {
+  role        String @id        // e.g., "ADMIN", "OPERATOR"
+  permissions Json              // { "inventory": true, "settings": false, ... }
+}
+
+// ═══════════════════════════════════════
+//  👥 Customers
+// ═══════════════════════════════════════
+
+model Customer {
+  cv           String            @id @default("A100001")
+  name         String
+  phone        String?
+  address      String?
+  sub_district String?
+  district     String?
+  province     String?
+  zipcode      String?
+  latitude     Float?
+  longitude    Float?
+  image_url    String?
+  jobs         Job[]
+  inventory    CustomerInventory[]
+
+  @@map("Customer")
+}
+
+// ═══════════════════════════════════════
+//  🏢 Warehouses
+// ═══════════════════════════════════════
+
+model Warehouse {
+  id           Int         @id @default(autoincrement())
+  name         String      @unique
+  is_active    Boolean     @default(true)
+  latitude     Float?
+  longitude    Float?
+  jobs         Job[]
+  transactions Transaction[]
+  targets      Transaction[] @relation("TargetWarehouse")
+  stocks       WarehouseStock[]
+
+  @@map("Warehouse")
+}
+
+// ═══════════════════════════════════════
+//  📦 Master Items (Item Catalog)
+//  ─ Quantity is NOT here — it lives in WarehouseStock
+// ═══════════════════════════════════════
+
+model MasterItem {
+  id                   Int                 @id @default(autoincrement())
+  category             String              // "ตู้แช่", "อุปกรณ์", "สติ๊กเกอร์"
+  brand                String?
+  item_name            String?
+  condition            String?
+  stock_qty            Int             @default(0)
+  details              String?
+  size                 String?
+  transactions         Transaction[]
+  warehouse_stocks     WarehouseStock[]
+  customer_inventories CustomerInventory[]
+
+  @@map("MasterItem")
+  @@index([category])
+}
+
+// ═══════════════════════════════════════
+//  📊 Warehouse Stock (Inventory per Warehouse)
+//  ─ Single source of truth for item quantities
+// ═══════════════════════════════════════
+
+model WarehouseStock {
+  id             Int         @id @default(autoincrement())
+  item_id        Int
+  warehouse_id   Int
+  stock_qty      Int         @default(0)     // พร้อมใช้
+  repair_qty     Int         @default(0)     // รอซ่อม
+  scrap_qty      Int         @default(0)     // ตีซาก
+  lost_qty       Int         @default(0)     // หาย
+  quarantine_qty Int         @default(0)     // กักกัน
+  transit_qty    Int         @default(0)     // ระหว่างทาง
+  item           MasterItem  @relation(fields: [item_id], references: [id], onDelete: Cascade)
+  warehouse      Warehouse   @relation(fields: [warehouse_id], references: [id], onDelete: Cascade)
+
+  @@unique([item_id, warehouse_id])
+  @@index([item_id])
+  @@index([warehouse_id])
+  @@map("WarehouseStock")
+}
+
+// ═══════════════════════════════════════
+//  🏠 Customer Inventory (Possession Tracking)
+// ═══════════════════════════════════════
+
+model CustomerInventory {
+  id           Int        @id @default(autoincrement())
+  customer_cv  String
+  item_id      Int
+  quantity     Int        @default(0)
+  last_updated DateTime   @default(now()) @updatedAt
+  customer     Customer   @relation(fields: [customer_cv], references: [cv], onDelete: Cascade)
+  item         MasterItem @relation(fields: [item_id], references: [id], onDelete: Cascade)
+
+  @@unique([customer_cv, item_id])
+  @@index([item_id])
+  @@map("CustomerInventory")
+}
+
+// ═══════════════════════════════════════
+//  📋 Jobs (Work Orders / ใบงาน)
+// ═══════════════════════════════════════
+
+model Job {
+  job_id           String        @id         // AUTO-INCREMENT: JOB-000001
+  customer_cv      String?
+  job_type         String                    // DELIVERY, RETURN, MIXED
+  operator_id      Int
+  status           String                    // PENDING, ACCEPTED, IN_TRANSIT, ARRIVED, COMPLETED, CANCELLED
+  note             String?
+  created_at       DateTime      @default(now())
+  delivery_by      String?
+  notification_date DateTime?
+  notifier         String?
+  appointment_date DateTime?
+  warehouse_id     Int?
+  customer         Customer?     @relation(fields: [customer_cv], references: [cv])
+  operator         User          @relation(fields: [operator_id], references: [id])
+  warehouse        Warehouse?    @relation(fields: [warehouse_id], references: [id])
+  transactions     Transaction[]
+
+  @@index([status])
+  @@index([customer_cv])
+  @@index([created_at])
+  @@map("Job")
+}
+
+// ═══════════════════════════════════════
+//  📝 Transactions (Movement Records)
+// ═══════════════════════════════════════
+
+model Transaction {
+  id               Int         @id @default(autoincrement())
+  job_id           String?
+  item_id          Int?
+  operator_id      Int
+  action_type      String                    // แจ้งส่ง, แจ้งคืน, เบิกออก, คืน, etc.
+  quantity         Int
+  zone_name        String?
+  return_reason    String?
+  cabinet_status   String?                   // ปกติ, ส่งซ่อม, เสียหายหนัก, สูญหาย
+  cancel_reason    String?
+  image_url        String?                   // base64 or URL
+  created_at       DateTime      @default(now())
+  serial_number    String?
+  distance_warning String?
+  lat              Float?
+  lng              Float?
+  delivery_by      String?
+  to_warehouse_id  Int?
+  warehouse_id     Int?
+  note             String?
+  activity_name    String?                   // for non-item transactions
+  // Relations
+  item             MasterItem?   @relation(fields: [item_id], references: [id], onDelete: SetNull)
+  job              Job?          @relation(fields: [job_id], references: [job_id], onDelete: SetNull)
+  operator         User          @relation(fields: [operator_id], references: [id])
+  target_warehouse Warehouse?    @relation("TargetWarehouse", fields: [to_warehouse_id], references: [id], onDelete: SetNull)
+  warehouse        Warehouse?    @relation(fields: [warehouse_id], references: [id], onDelete: SetNull)
+  zone             Zone?         @relation(fields: [zone_name], references: [name], onDelete: SetNull)
+
+  @@index([job_id])
+  @@index([item_id])
+  @@index([operator_id])
+  @@index([created_at])
+  @@index([action_type])
+  @@map("Transaction")
+}
+
+// ═══════════════════════════════════════
+//  🗺️ Zones (Working Zones)
+// ═══════════════════════════════════════
+
+model Zone {
+  name         String        @id     // e.g., "ภูเก็ตเหนือ", "ภูเก็ตใต้"
+  details      String?
+  transactions Transaction[]
+
+  @@map("Zone")
+}
+
+// ═══════════════════════════════════════
+//  ⚙️ System Settings (Key-Value)
+// ═══════════════════════════════════════
+
+model SystemSetting {
+  key   String @id     // e.g., "telegram_bot_token", "daily_report_time"
+  value String
+
+  @@map("SystemSetting")
+}
+
+// ═══════════════════════════════════════
+//  📜 Audit Log (Security Tracking)
+// ═══════════════════════════════════════
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  user_id    Int?
+  ip_address String?
+  location   String?
+  user_agent String?
+  action     String?
+  created_at DateTime @default(now())
+  user       User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([user_id])
+  @@index([created_at])
+  @@map("AuditLog")
+}
