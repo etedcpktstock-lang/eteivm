@@ -15,6 +15,7 @@ import zonesRoutes from './routes/zones';
 import settingsRoutes from './routes/settings';
 import warehousesRoutes from './routes/warehouses';
 import uploadRoutes from './routes/upload';
+import itemMergeRoutes from './routes/itemMerge';
 
 dotenv.config();
 
@@ -54,6 +55,7 @@ app.use('/api/settings', authenticateToken, settingsRoutes);
 app.use('/api/warehouses', authenticateToken, warehousesRoutes);
 
 app.use('/api/upload', uploadRoutes);
+app.use('/api/items', authenticateToken, itemMergeRoutes); // merge-duplicates, find-duplicates
 // Compatibility fallback for Frontend initial data load logic that maps to multiple things
 app.get('/api/initialData', authenticateToken, async (_req, res) => {
     try {
