@@ -22,17 +22,26 @@ router.post('/confirm-repair', async (req, res) => {
             let targetItem = item;
 
             if (['quarantine_approve', 'repair_done', 'available'].includes(action)) {
-                const isGoodAlready = item.condition === 'ใหม่' || item.condition === 'สต๊อก';
-                if (action === 'quarantine_approve' && isGoodAlready) {
+                const conditionStr = String(item.condition || '').trim();
+                
+                if (conditionStr === 'สต๊อก') {
                     targetItem = item;
-                } else if (item.condition !== 'สต๊อก') {
+                } else {
+                    const newCategory = item.category || "ETC";
+                    const newBrand = item.brand || "-";
+                    const newItemName = item.item_name || "-";
+                    const newSize = item.size || "-";
+                    const newDetails = item.details || "";
+
                     const found = await tx.masterItem.findFirst({
-                        where: { category: item.category || "", brand: item.brand || "", item_name: item.item_name || "", size: item.size || "", details: item.details || "", condition: 'สต๊อก' }
+                        where: { category: newCategory, brand: newBrand, item_name: newItemName, size: newSize, details: newDetails, condition: 'สต๊อก' }
                     });
-                    if (found) { targetItem = found; }
-                    else {
+                    
+                    if (found) { 
+                        targetItem = found; 
+                    } else {
                         targetItem = await tx.masterItem.create({
-                            data: { category: item.category || "ETC", brand: item.brand || "-", item_name: item.item_name || "-", size: item.size || "-", condition: 'สต๊อก', details: item.details || "", stock_qty: 0 }
+                            data: { category: newCategory, brand: newBrand, item_name: newItemName, size: newSize, condition: 'สต๊อก', details: newDetails, stock_qty: 0 }
                         });
                     }
                 }
