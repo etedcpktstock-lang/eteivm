@@ -381,7 +381,23 @@ const DesktopInventory: React.FC<DesktopInventoryProps> = ({
                     >
                       <td>
                         <div style={{ fontWeight: 600 }}>{item.รายการ}</div>
-                        <div style={{ color: '#6b7280', fontSize: 11 }}>{item.ประเภท} • {item.ยี่ห้อหรือรูปแบบ || '-'}</div>
+                        <div style={{ color: '#6b7280', fontSize: 11 }}>
+                          {item.ประเภท} • {item.ยี่ห้อหรือรูปแบบ || '-'} {item.ขนาด ? `• ขนาด: ${item.ขนาด}` : ''}
+                        </div>
+                        <div style={{ color: '#6b7280', fontSize: 10, marginTop: 4, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                          <span className="plain-badge" style={{ padding: '0 4px', fontSize: 9 }}>สภาพ: {item.สภาพ || 'ใหม่'}</span>
+                          <span className="plain-badge" style={{ padding: '0 4px', fontSize: 9, background: '#f3f4f6', color: '#4b5563', border: 'none' }}>
+                            คลัง: {filterWarehouse !== 'ทั้งหมด' ? filterWarehouse : (
+                              (item.warehouse_stocks || [])
+                                .filter((s: any) => Number(s.stock_qty ?? s.stock ?? 0) > 0 || Number(s.quarantine_qty ?? s.quarantine ?? 0) > 0 || Number(s.repair_qty ?? s.repair ?? 0) > 0)
+                                .map((s: any) => {
+                                  const wId = Number(s.warehouse_id ?? s.warehouseId);
+                                  const w = warehouses.find((w: any) => Number(w.id) === wId);
+                                  return w ? (w.name || w.ศูนย์) : `คลัง ${wId}`;
+                                }).join(', ') || 'ไม่มีสต็อก'
+                            )}
+                          </span>
+                        </div>
                       </td>
                       <td>
                         <span className="plain-badge">{item.tracking_type || 'BATCH'}</span>

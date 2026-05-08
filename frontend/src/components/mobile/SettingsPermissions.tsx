@@ -176,7 +176,7 @@ const SettingsPermissions: React.FC<SettingsPermissionsProps> = ({ users, onRefr
 
  <div className="flex flex-wrap gap-2.5 relative z-10 w-full md:w-auto items-center overflow-x-auto scrollbar-hide pb-1">
  {uniqueRoles.map(role => {
- const isDefault = ['staff', 'office admin', 'admin', 'manager'].includes(role.toLowerCase());
+  const isDefault = ['super_admin', 'staff'].includes(role.toLowerCase());
  return (
  <div key={role} className="relative flex-shrink-0">
  <button

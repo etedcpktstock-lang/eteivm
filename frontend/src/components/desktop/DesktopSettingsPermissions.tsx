@@ -70,13 +70,13 @@ const PERMISSION_GROUPS = [
     ]
   },
   {
-    group: 'ลูกค้า & ซ่อมบำรุง',
+    group: 'ลูกค้า & จัดการรับคืน',
     icon: 'people',
     items: [
       { key: 'customers_view', label: 'ดูข้อมูลลูกค้า' },
       { key: 'customers_edit', label: 'แก้ไขลูกค้า' },
-      { key: 'repair_view', label: 'ดูงานซ่อม' },
-      { key: 'repair_manage', label: 'จัดการซ่อม' },
+      { key: 'repair_view', label: 'ดูรายการจัดการรับคืน' },
+      { key: 'repair_manage', label: 'จัดการรับคืน' },
     ]
   },
   {
@@ -106,6 +106,7 @@ const DesktopSettingsPermissions: React.FC<Props> = ({ onRefresh }) => {
   const [showNewRole, setShowNewRole] = useState(false);
   const [newRoleName, setNewRoleName] = useState('');
   const [newRoleLevel, setNewRoleLevel] = useState(2);
+  const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
 
   const roles = useMemo(() => {
     const all = Object.keys(permissions).filter(r => r && r !== 'undefined');
@@ -171,18 +172,37 @@ const DesktopSettingsPermissions: React.FC<Props> = ({ onRefresh }) => {
     setShowNewRole(false);
   };
 
-  const handleDeleteRole = (role: string) => {
-    const level = ACCESS_LEVELS[role]?.level ?? 0;
-    if (level >= 4) {
-      alert('ไม่สามารถลบ SUPER_ADMIN ได้');
+  const requestDeleteRole = (role: string) => {
+    if (role === 'SUPER_ADMIN' || role === 'STAFF') {
+      alert('ไม่สามารถลบ SUPER_ADMIN หรือ STAFF (ค่าเริ่มต้นของระบบ) ได้');
       return;
     }
-    if (!confirm(`ลบบทบาท "${role}"? ผู้ใช้ที่ใช้บทบาทนี้จะต้องถูกเปลี่ยนบทบาทก่อน`)) return;
-    const { [role]: _, ...rest } = permissions;
-    setPermissions(rest);
-    if (selectedRole === role) {
-      const remaining = Object.keys(rest);
-      setSelectedRole(remaining[0] || '');
+    setRoleToDelete(role);
+  };
+
+  const confirmDeleteRole = async () => {
+    if (!roleToDelete) return;
+    const role = roleToDelete;
+    
+    try {
+      const { [role]: _, ...rest } = permissions;
+      setPermissions(rest);
+      
+      if (selectedRole === role) {
+        const remaining = Object.keys(rest);
+        setSelectedRole(remaining[0] || '');
+      }
+
+      setSaving(true);
+      await savePermissions(rest);
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+      if (onRefresh) onRefresh();
+    } catch (e) {
+      alert('Error deleting role: ' + (e as Error).message);
+    } finally {
+      setSaving(false);
+      setRoleToDelete(null);
     }
   };
 
@@ -328,9 +348,9 @@ const DesktopSettingsPermissions: React.FC<Props> = ({ onRefresh }) => {
                   <span className="text-[11px] text-slate-400 font-bold">
                     {enabledCount}/{totalKeys} เปิดใช้งาน
                   </span>
-                  {ACCESS_LEVELS[selectedRole]?.level < 4 && (
+                  {(selectedRole !== 'SUPER_ADMIN' && selectedRole !== 'STAFF') && (
                     <button
-                      onClick={() => handleDeleteRole(selectedRole)}
+                      onClick={() => requestDeleteRole(selectedRole)}
                       className="h-9 px-3 rounded-lg bg-rose-50 text-rose-500 border border-rose-200 text-[11px] font-bold hover:bg-rose-100"
                     >
                       ลบบทบาท
@@ -402,6 +422,34 @@ const DesktopSettingsPermissions: React.FC<Props> = ({ onRefresh }) => {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {roleToDelete && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h3 className="text-[16px] font-black text-slate-900 mb-2">ยืนยันการลบบทบาท</h3>
+            <p className="text-[13px] text-slate-500 mb-6 leading-relaxed">
+              คุณแน่ใจหรือไม่ว่าต้องการลบบทบาท <span className="font-bold text-rose-500">"{roleToDelete}"</span> ?<br/>
+              <span className="text-[11px] text-slate-400 mt-2 block">หมายเหตุ: ผู้ใช้ที่ใช้บทบาทนี้จะต้องถูกเปลี่ยนบทบาทก่อน</span>
+            </p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setRoleToDelete(null)}
+                className="flex-1 h-10 rounded-xl bg-slate-100 text-slate-600 font-bold text-[13px] hover:bg-slate-200"
+              >
+                ยกเลิก
+              </button>
+              <button 
+                onClick={confirmDeleteRole}
+                disabled={saving}
+                className="flex-1 h-10 rounded-xl bg-rose-500 text-white font-bold text-[13px] hover:bg-rose-600 disabled:opacity-50"
+              >
+                {saving ? 'กำลังลบ...' : 'ยืนยันลบ'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

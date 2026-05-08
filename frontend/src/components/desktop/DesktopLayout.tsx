@@ -23,6 +23,7 @@ import {
   ShieldCheck,
   ClipboardList,
   Search,
+  Wrench,
 } from 'lucide-react';
 
 const BRAND_ICON_MAP: Record<string, React.FC<{ size?: number }>> = {
@@ -77,6 +78,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     { id: 'reports', label: 'รายงานและส่งออก', subtitle: 'รายงานพร้อมส่งออก', icon: Search },
     { id: 'audit', label: 'บันทึกระบบ (Admin Log)', subtitle: 'ตรวจสอบกิจกรรมในระบบ', icon: ShieldCheck },
     { id: 'survey', label: 'สำรวจลูกค้า', subtitle: 'ดูและบันทึกข้อมูลหน้างาน', icon: Search },
+    { id: 'repair', label: 'จัดการรับคืน', subtitle: 'ตรวจสอบพัสดุรับคืน/ซ่อม', icon: Wrench },
     { id: 'calendar', label: 'ปฏิทินงาน', subtitle: 'ดูรายการตามวัน', icon: CalendarDays },
     { id: 'logistics', label: 'งานขนส่ง (Logistics)', subtitle: 'ติดตามงานส่งของ/รับคืน', icon: Truck },
     { id: 'settings', label: 'ตั้งค่าระบบ', subtitle: 'จัดการ master และสิทธิ์', icon: Settings },
@@ -98,6 +100,8 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
       history: ['nav_history', 'history'],
       reports: ['nav_history', 'history', 'nav_reports', 'reports'],
       audit: ['nav_audit', 'audit'],
+      survey: ['customers_view', 'customers_edit'],
+      repair: ['repair_view', 'repair_manage'],
       calendar: ['nav_calendar', 'calendar'],
       logistics: ['nav_logistics', 'logistics'],
       settings: ['nav_settings', 'settings'],

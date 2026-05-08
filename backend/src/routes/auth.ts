@@ -87,6 +87,17 @@ router.get('/permissions', authenticateToken, requireRole('SUPER_ADMIN'), async 
 router.post('/permissions', authenticateToken, requireRole('SUPER_ADMIN'), async (req: Request, res: Response) => {
   const { permissions } = req.body; // { admin: {...}, staff: {...} }
   try {
+    const incomingRoles = Object.keys(permissions);
+    if (incomingRoles.length > 0) {
+      await prisma.rolePermission.deleteMany({
+        where: {
+          role: {
+            notIn: [...incomingRoles, 'SUPER_ADMIN', 'STAFF']
+          }
+        }
+      });
+    }
+
     for (const [role, perms] of Object.entries(permissions)) {
       await prisma.rolePermission.upsert({
         where: { role },

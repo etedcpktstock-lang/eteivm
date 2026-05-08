@@ -32,7 +32,7 @@ const Welcome: React.FC<WelcomeProps> = ({ user, stats, latestVersion, currentVe
     return user.role || 'ผู้ใช้งาน';
   }, [user.role]);
 
-  const perms = permissions || {};
+  const perms = user.permissions || permissions || {};
   const canManageSettings = user.role === 'admin' || perms.settings;
   const needsUpdate = latestVersion && currentVersion && latestVersion !== currentVersion;
   const appName = settings?.APP_NAME || 'ETE DC';
@@ -47,22 +47,23 @@ const Welcome: React.FC<WelcomeProps> = ({ user, stats, latestVersion, currentVe
   ];
 
   const mainMenu = [
-    { id: 'receive', label: 'รับพัสดุเข้า', sub: 'บันทึกรับเข้าและตรวจข้อมูล', icon: 'input', visible: perms.btn_receive !== false },
-    { id: 'issue', label: 'เบิกพัสดุออก', sub: 'เลือกสินค้าและยืนยันเบิก', icon: 'output', visible: perms.btn_issue !== false },
-    { id: 'return', label: 'รับพัสดุคืน', sub: 'บันทึกรับคืนจากลูกค้า', icon: 'assignment_return', visible: perms.btn_return !== false },
-    { id: 'job-request', label: 'แจ้งงาน', sub: 'สร้างงานส่งของ / รับคืน', icon: 'assignment', visible: perms.btn_job_request !== false },
-    { id: 'logistics', label: 'งานขนส่ง', sub: 'ติดตามและอัปเดตงานหน้างาน', icon: 'local_shipping', visible: perms.btn_logistics !== false },
-    { id: 'transfer', label: 'ย้ายพัสดุ', sub: 'ย้ายระหว่างคลัง', icon: 'swap_horiz', visible: perms.btn_transfer !== false },
-    { id: 'dashboard', label: 'ดูสต็อก', sub: 'ภาพรวมคลังและสถานะสินค้า', icon: 'inventory_2', visible: perms.btn_inventory !== false },
-    { id: 'history', label: 'ประวัติรายการ', sub: 'ค้นหาและตรวจย้อนหลัง', icon: 'history', visible: perms.btn_history !== false },
-    { id: 'reports', label: 'รายงาน', sub: 'สรุปผลและส่งออกข้อมูล', icon: 'analytics', visible: perms.btn_reports !== false },
-    { id: 'survey', label: 'สำรวจลูกค้า', sub: 'เก็บข้อมูลหน้างาน', icon: 'person_search', visible: true },
-    { id: 'repair', label: 'จัดการรับคืน', sub: 'ตรวจสอบพัสดุที่รอจัดการ', icon: 'engineering', visible: perms.btn_repair !== false },
+    { id: 'receive', label: 'รับพัสดุเข้า', sub: 'บันทึกรับเข้าและตรวจข้อมูล', icon: 'input', visible: perms.btn_receive || perms.receive },
+    { id: 'issue', label: 'เบิกพัสดุออก', sub: 'เลือกสินค้าและยืนยันเบิก', icon: 'output', visible: perms.btn_issue || perms.issue },
+    { id: 'return', label: 'รับพัสดุคืน', sub: 'บันทึกรับคืนจากลูกค้า', icon: 'assignment_return', visible: perms.btn_return || perms.return },
+    { id: 'job-request', label: 'แจ้งงาน', sub: 'สร้างงานส่งของ / รับคืน', icon: 'assignment', visible: perms.btn_job_request || perms.job_request },
+    { id: 'logistics', label: 'งานขนส่ง', sub: 'ติดตามและอัปเดตงานหน้างาน', icon: 'local_shipping', visible: perms.btn_logistics || perms.logistics_manage || perms.logistics_view },
+    { id: 'transfer', label: 'ย้ายพัสดุ', sub: 'ย้ายระหว่างคลัง', icon: 'swap_horiz', visible: perms.btn_transfer || perms.transfer },
+    { id: 'dashboard', label: 'ดูสต็อก', sub: 'ภาพรวมคลังและสถานะสินค้า', icon: 'inventory_2', visible: perms.btn_inventory || perms.inventory_view },
+    { id: 'history', label: 'ประวัติรายการ', sub: 'ค้นหาและตรวจย้อนหลัง', icon: 'history', visible: perms.btn_history || perms.history_view || perms.history_view_all },
+    { id: 'reports', label: 'รายงาน', sub: 'สรุปผลและส่งออกข้อมูล', icon: 'analytics', visible: perms.btn_reports || perms.reports_view },
+    { id: 'survey', label: 'สำรวจลูกค้า', sub: 'เก็บข้อมูลหน้างาน', icon: 'person_search', visible: perms.customers_view || perms.customers_edit },
+    { id: 'repair', label: 'จัดการรับคืน', sub: 'ตรวจสอบพัสดุที่รอจัดการ', icon: 'engineering', visible: perms.btn_repair || perms.repair_view || perms.repair_manage },
     { id: 'settings', label: 'ตั้งค่าระบบ', sub: 'จัดการผู้ใช้และข้อมูลหลัก', icon: 'settings', visible: canManageSettings },
-    { id: 'audit', label: 'บันทึกระบบ', sub: 'ตรวจสอบการใช้งานย้อนหลัง', icon: 'admin_panel_settings', visible: (user.role === 'admin' || user.role === 'manager') }
+    { id: 'audit', label: 'บันทึกระบบ', sub: 'ตรวจสอบการใช้งานย้อนหลัง', icon: 'admin_panel_settings', visible: perms.audit_view }
   ].filter(i => {
-    if (i.id === 'repair' || i.id === 'audit' || i.id === 'settings') return i.visible;
-    return user.role === 'admin' || user.role === 'manager' || i.visible;
+    const r = (user.role || '').toUpperCase();
+    if (r === 'ADMIN' || r === 'SUPER_ADMIN' || r === 'ผู้ดูแลระบบ' || r === 'ผู้ดูแลสูงสุด') return true;
+    return i.visible;
   });
 
   const colorMap: Record<string, string> = {
@@ -149,7 +150,7 @@ const Welcome: React.FC<WelcomeProps> = ({ user, stats, latestVersion, currentVe
       </section>
 
       {/* Repair alert */}
-      {(stats.allQuarantine > 0 || stats.allScrap > 0 || stats.allLost > 0) && (
+      {(perms.btn_repair || perms.repair_view || perms.repair_manage || user.role === 'admin' || user.role === 'super_admin' || user.role === 'ผู้ดูแลระบบ') && (stats.allQuarantine > 0 || stats.allScrap > 0 || stats.allLost > 0) && (
         <button onClick={() => setActiveTab('repair')} className="rounded-2xl border border-rose-100 bg-rose-50 p-4 flex items-center justify-between gap-3 text-left hover:shadow-sm transition-shadow">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-white text-rose-600 flex items-center justify-center border border-rose-100">
