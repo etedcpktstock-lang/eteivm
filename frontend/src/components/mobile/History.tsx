@@ -3,6 +3,7 @@ import { Search, X, RotateCcw } from 'lucide-react';
 import type { Transaction, User, Customer } from '../../types';
 import { formatThaiDateTime } from '../../utils/dateTimeUtils';
 import { ImageLightbox } from '../shared/CommonUI';
+import { SARABUN_REGULAR, SARABUN_BOLD } from '../../utils/pdfFonts';
 
 const getDriveDirectLink = (url: string) => {
  if (!url) return '';
@@ -140,8 +141,17 @@ export default function History({ transactions, user, customers, onRefresh, onVo
  import('jspdf-autotable')
  ]);
  const doc = new jsPDF('l', 'mm', 'a4');
+
+ // Add Thai Fonts
+ doc.addFileToVFS('Sarabun-Regular.ttf', SARABUN_REGULAR);
+ doc.addFileToVFS('Sarabun-Bold.ttf', SARABUN_BOLD);
+ doc.addFont('Sarabun-Regular.ttf', 'Sarabun', 'normal');
+ doc.addFont('Sarabun-Bold.ttf', 'Sarabun', 'bold');
+
+ doc.setFont('Sarabun', 'bold');
  doc.setFontSize(22);
  doc.text('ETE DC PHUKET - Transaction History Report', 14, 20);
+ doc.setFont('Sarabun', 'normal');
  doc.setFontSize(10);
  doc.text(`Generated on: ${new Date().toLocaleString('th-TH')}`, 14, 28);
 
@@ -170,7 +180,7 @@ export default function History({ transactions, user, customers, onRefresh, onVo
  body: tableData,
  theme: 'grid',
  headStyles: { fillColor: [79, 70, 229], textColor: 255, fontStyle: 'bold' },
- styles: { fontSize: 9, cellPadding: 2 },
+ styles: { font: 'Sarabun', fontSize: 9, cellPadding: 2 },
  columnStyles: {
  4: { cellWidth: 60 },
  3: { cellWidth: 40 }

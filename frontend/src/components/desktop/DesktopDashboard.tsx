@@ -10,6 +10,8 @@ import {
   DashboardRecentActivityCard,
   DashboardTopEntitiesCard,
   DashboardTopMoversCard,
+  DashboardAlertsPanel,
+  DashboardOperationsPanel,
 } from './DesktopDashboardSections';
 import {
   DashboardStockCompositionCard,
@@ -35,6 +37,15 @@ function formatDeltaPercent(current: number, previous: number) {
   const diff = ((current - previous) / previous) * 100;
   const rounded = Math.round(diff);
   return `${rounded > 0 ? '+' : ''}${rounded}%`;
+}
+
+function getActionCategory(status: string): 'IN' | 'OUT' | 'RETURN' | 'VOID' | 'OTHER' {
+  const s = (status || '').toLowerCase();
+  if (s === 'รับเข้า' || s.includes('พร้อมใช้งาน') || s.includes('ซ่อมเสร็จ')) return 'IN';
+  if (s === 'เบิกออก' || s.includes('ส่งมอบเรียบร้อย') || s.includes('กำลังเดินทาง') || s === 'แจ้งส่ง') return 'OUT';
+  if (s === 'รับคืน' || s === 'แจ้งคืน' || s.includes('กำลังเดินทางกลับ') || s === 'รอตรวจสอบ') return 'RETURN';
+  if (s.includes('ยกเลิก')) return 'VOID';
+  return 'OTHER';
 }
 
 export default function DesktopDashboard({
@@ -91,8 +102,8 @@ export default function DesktopDashboard({
       available,
       transit,
       quarantine,
-      receiveToday: todayTx.filter((t) => t.สถานะ === 'รับเข้า').length,
-      issueToday: todayTx.filter((t) => t.สถานะ === 'เบิกออก').length,
+      receiveToday: todayTx.filter((t) => getActionCategory(t.สถานะ) === 'IN').length,
+      issueToday: todayTx.filter((t) => getActionCategory(t.สถานะ) === 'OUT').length,
       repair,
       scrap,
       lost,
@@ -115,10 +126,10 @@ export default function DesktopDashboard({
 
   const rangeStats = useMemo(() => {
     return {
-      receive: rangeTransactions.filter(t => t.สถานะ === 'รับเข้า').length,
-      issue: rangeTransactions.filter(t => t.สถานะ === 'เบิกออก').length,
-      return: rangeTransactions.filter(t => t.สถานะ === 'รับคืน').length,
-      void: rangeTransactions.filter(t => (t.สถานะ || '').includes('ยกเลิก')).length,
+      receive: rangeTransactions.filter(t => getActionCategory(t.สถานะ) === 'IN').length,
+      issue: rangeTransactions.filter(t => getActionCategory(t.สถานะ) === 'OUT').length,
+      return: rangeTransactions.filter(t => getActionCategory(t.สถานะ) === 'RETURN').length,
+      void: rangeTransactions.filter(t => getActionCategory(t.สถานะ) === 'VOID').length,
       totalQty: rangeTransactions.reduce((sum, t) => sum + toSafeNumber(t.จำนวน), 0),
       activeZones: new Set(rangeTransactions.map((t) => (t.เขตการทำงาน || '').trim()).filter(Boolean)).size,
       activeCustomers: new Set(rangeTransactions.map((t) => (t.CV || '').trim()).filter(Boolean)).size,
@@ -127,10 +138,10 @@ export default function DesktopDashboard({
 
   const previousRangeStats = useMemo(() => {
     return {
-      receive: previousRangeTransactions.filter(t => t.สถานะ === 'รับเข้า').length,
-      issue: previousRangeTransactions.filter(t => t.สถานะ === 'เบิกออก').length,
-      return: previousRangeTransactions.filter(t => t.สถานะ === 'รับคืน').length,
-      void: previousRangeTransactions.filter(t => (t.สถานะ || '').includes('ยกเลิก')).length,
+      receive: previousRangeTransactions.filter(t => getActionCategory(t.สถานะ) === 'IN').length,
+      issue: previousRangeTransactions.filter(t => getActionCategory(t.สถานะ) === 'OUT').length,
+      return: previousRangeTransactions.filter(t => getActionCategory(t.สถานะ) === 'RETURN').length,
+      void: previousRangeTransactions.filter(t => getActionCategory(t.สถานะ) === 'VOID').length,
       activeZones: new Set(previousRangeTransactions.map((t) => (t.เขตการทำงาน || '').trim()).filter(Boolean)).size,
       activeCustomers: new Set(previousRangeTransactions.map((t) => (t.CV || '').trim()).filter(Boolean)).size,
     };
@@ -149,13 +160,32 @@ export default function DesktopDashboard({
       data.push({
         name: format(date, 'd MMM', { locale: th }),
         date: dateStr,
-        'รับเข้า': dayTxns.filter(t => t.สถานะ === 'รับเข้า').length,
-        'เบิกออก': dayTxns.filter(t => t.สถานะ === 'เบิกออก').length,
-        'รับคืน': dayTxns.filter(t => t.สถานะ === 'รับคืน').length,
+        'รับเข้า': dayTxns.filter(t => getActionCategory(t.สถานะ) === 'IN').length,
+        'เบิกออก': dayTxns.filter(t => getActionCategory(t.สถานะ) === 'OUT').length,
+        'รับคืน': dayTxns.filter(t => getActionCategory(t.สถานะ) === 'RETURN').length,
       });
     }
     return data;
   }, [transactions, dateRange]);
+
+  const sparklineData = useMemo(() => {
+    // Last 14 days for sparklines
+    const days = 14;
+    const data = [];
+    for (let i = 0; i < days; i++) {
+      const date = subDays(now, (days - 1) - i);
+      const dateStr = format(date, 'yyyy-MM-dd');
+      const dayTxns = transactions.filter(t => String(t['วัน-เวลา'] || '').startsWith(dateStr));
+      data.push({
+        date: dateStr,
+        in: dayTxns.filter(t => getActionCategory(t.สถานะ) === 'IN').length,
+        out: dayTxns.filter(t => getActionCategory(t.สถานะ) === 'OUT').length,
+        ret: dayTxns.filter(t => getActionCategory(t.สถานะ) === 'RETURN').length,
+      });
+    }
+    return data;
+  }, [transactions, now]);
+
 
   const recentActivity = useMemo(() => {
     return [...transactions]
@@ -177,6 +207,7 @@ export default function DesktopDashboard({
         footnote: `จากทั้งหมด ${stats.totalQty.toLocaleString()} ชิ้น`,
         deltaLabel: 'stock พร้อมจ่าย',
         tone: '#0f766e',
+        sparkline: sparklineData.map(d => ({ value: d.in + d.out })), // Mixed trend for stock
       },
       {
         id: 'logistics',
@@ -185,6 +216,7 @@ export default function DesktopDashboard({
         footnote: stats.transit > 0 ? 'ควรติดตามสถานะจัดส่ง' : 'ไม่มีค้างระหว่างส่ง',
         deltaLabel: 'กำลังเคลื่อนย้าย',
         tone: '#2563eb',
+        sparkline: sparklineData.map(d => ({ value: d.out })),
       },
       {
         id: 'repair',
@@ -193,6 +225,7 @@ export default function DesktopDashboard({
         footnote: 'รายการพักตรวจ/ยังไม่พร้อมใช้',
         deltaLabel: 'รอการตรวจสอบ',
         tone: '#7c3aed',
+        sparkline: sparklineData.map(d => ({ value: d.ret })),
       },
       {
         id: 'repair',
@@ -201,6 +234,7 @@ export default function DesktopDashboard({
         footnote: stats.repair > 0 ? 'มี backlog ต้องติดตาม' : 'ไม่มีรายการค้างซ่อม',
         deltaLabel: 'repair backlog',
         tone: '#dc2626',
+        sparkline: sparklineData.map(d => ({ value: 0 })), // Fallback
       },
       {
         id: 'history',
@@ -209,6 +243,7 @@ export default function DesktopDashboard({
         footnote: `เทียบช่วงก่อน ${formatDelta(receiveDelta)}`,
         deltaLabel: formatDeltaPercent(rangeStats.receive, previousRangeStats.receive),
         tone: '#10b981',
+        sparkline: sparklineData.map(d => ({ value: d.in })),
       },
       {
         id: 'history',
@@ -217,6 +252,7 @@ export default function DesktopDashboard({
         footnote: `เทียบช่วงก่อน ${formatDelta(issueDelta)}`,
         deltaLabel: formatDeltaPercent(rangeStats.issue, previousRangeStats.issue),
         tone: '#f59e0b',
+        sparkline: sparklineData.map(d => ({ value: d.out })),
       },
       {
         id: 'history',
@@ -225,6 +261,7 @@ export default function DesktopDashboard({
         footnote: `เทียบช่วงก่อน ${formatDelta(returnDelta)}`,
         deltaLabel: formatDeltaPercent(rangeStats.return, previousRangeStats.return),
         tone: '#8b5cf6',
+        sparkline: sparklineData.map(d => ({ value: d.ret })),
       },
       {
         id: 'reports',
@@ -233,9 +270,10 @@ export default function DesktopDashboard({
         footnote: `${rangeStats.activeCustomers.toLocaleString()} CV เคลื่อนไหว`,
         deltaLabel: `Δ ${formatDelta(zoneDelta)}`,
         tone: '#334155',
+        sparkline: sparklineData.map(d => ({ value: d.in + d.out + d.ret })), // overall activity
       },
     ];
-  }, [stats, rangeStats, previousRangeStats]);
+  }, [stats, rangeStats, previousRangeStats, sparklineData]);
 
   const alertItems = useMemo<DashboardAlert[]>(() => {
     const alerts: DashboardAlert[] = [];
@@ -491,10 +529,10 @@ export default function DesktopDashboard({
   }, [rangeStats, previousRangeStats]);
 
   const rangeKpis = useMemo(() => [
-    { label: 'รับเข้า', val: rangeStats.receive, prev: previousRangeStats.receive, icon: ({ size, style }: any) => <span style={{...style, fontSize: size}}>↓</span>, color: '#10b981' },
-    { label: 'เบิกออก', val: rangeStats.issue, prev: previousRangeStats.issue, icon: ({ size, style }: any) => <span style={{...style, fontSize: size}}>↑</span>, color: '#f59e0b' },
-    { label: 'รับคืน', val: rangeStats.return, prev: previousRangeStats.return, icon: ({ size, style }: any) => <span style={{...style, fontSize: size}}>↻</span>, color: '#8b5cf6' },
-    { label: 'ยกเลิก', val: rangeStats.void, prev: previousRangeStats.void, icon: ({ size, style }: any) => <span style={{...style, fontSize: size}}>✕</span>, color: '#ef4444' },
+    { label: 'รับเข้า', val: rangeStats.receive, prev: previousRangeStats.receive, icon: ({ size, style }: any) => <span style={{ ...style, fontSize: size }}>↓</span>, color: '#10b981' },
+    { label: 'เบิกออก', val: rangeStats.issue, prev: previousRangeStats.issue, icon: ({ size, style }: any) => <span style={{ ...style, fontSize: size }}>↑</span>, color: '#f59e0b' },
+    { label: 'รับคืน', val: rangeStats.return, prev: previousRangeStats.return, icon: ({ size, style }: any) => <span style={{ ...style, fontSize: size }}>↻</span>, color: '#8b5cf6' },
+    { label: 'ยกเลิก', val: rangeStats.void, prev: previousRangeStats.void, icon: ({ size, style }: any) => <span style={{ ...style, fontSize: size }}>✕</span>, color: '#ef4444' },
   ], [rangeStats, previousRangeStats]);
 
   const navigateTo = (tab: any) => {
@@ -514,39 +552,48 @@ export default function DesktopDashboard({
 
       <DashboardKpiGrid items={executiveKpis} onNavigate={navigateTo} />
 
-      <DashboardTrendCard
-        rangeLabel={rangeLabel}
-        rangePreset={rangePreset}
-        onRangePresetChange={setRangePreset}
-        customStart={customStart}
-        onCustomStartChange={setCustomStart}
-        customEnd={customEnd}
-        onCustomEndChange={setCustomEnd}
-        rangeKpis={rangeKpis}
-        chartData={chartData}
-        alertItems={alertItems}
-        operationsCards={operationsCards}
-        onRefresh={onRefresh}
-        loading={loading}
-        formatDelta={formatDelta}
-        onNavigate={navigateTo}
-        phaseNote="ตอนนี้ dashboard มี summary + alerts + donut composition + comparison + top entities แล้ว รอบนี้เพิ่ม comparison strip และ panel ที่กดต่อไปยัง reports/history ได้ เพื่อให้หน้า dashboard เป็นจุดควบคุมมากขึ้น"
-      />
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(340px, 1fr) minmax(640px, 2.2fr)', gap: 20, marginBottom: 20 }}>
+        <DashboardRecentActivityCard items={recentActivity} onNavigate={navigateTo} />
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <DashboardTrendCard
+            rangeLabel={rangeLabel}
+            rangePreset={rangePreset}
+            onRangePresetChange={setRangePreset}
+            customStart={customStart}
+            onCustomStartChange={setCustomStart}
+            customEnd={customEnd}
+            onCustomEndChange={setCustomEnd}
+            rangeKpis={rangeKpis}
+            chartData={chartData}
+            alertItems={alertItems}
+            operationsCards={operationsCards}
+            onRefresh={onRefresh}
+            loading={loading}
+            formatDelta={formatDelta}
+            onNavigate={navigateTo}
+            phaseNote="ระบบแดชบอร์ดได้รับการอัปเกรดเป็นเวอร์ชันพรีเมียม พร้อมการแสดงผลแนวโน้มแบบใหม่และการกรองข้อมูลที่แม่นยำขึ้น"
+          />
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+            <DashboardAlertsPanel items={alertItems} />
+            <DashboardOperationsPanel items={operationsCards} onNavigate={navigateTo} note="เน้นการติดตามสถานะแบบ Real-time และการจัดการพัสดุระหว่างส่ง" />
+          </div>
+        </div>
+      </div>
 
       <DashboardComparisonStrip items={comparisonStrip} onNavigate={navigateTo} formatDelta={formatDelta} />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 1fr) minmax(420px, 1.35fr)', gap: 16, marginBottom: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 1fr) minmax(420px, 1.35fr)', gap: 20, marginBottom: 20 }}>
         <DashboardStockCompositionCard data={stockCompositionData} onNavigate={navigateTo} />
 
         <DashboardComparisonChartCard data={comparisonData} onNavigate={navigateTo} />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 1.15fr) minmax(320px, 0.95fr) minmax(420px, 1.2fr)', gap: 16, marginBottom: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 1fr) minmax(320px, 1fr)', gap: 20, marginBottom: 20 }}>
         <DashboardTopMoversCard items={topMovers} onNavigate={navigateTo} />
 
         <DashboardTopEntitiesCard topActiveCustomers={topActiveCustomers} topActiveZones={topActiveZones} onNavigate={navigateTo} />
-
-        <DashboardRecentActivityCard items={recentActivity} onNavigate={navigateTo} />
       </div>
     </div>
   );

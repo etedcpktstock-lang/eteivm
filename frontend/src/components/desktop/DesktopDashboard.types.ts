@@ -36,6 +36,7 @@ export type KpiCard = {
   footnote: string;
   deltaLabel: string;
   tone: string;
+  sparkline?: { value: number }[];
 };
 
 // ---- operations ----

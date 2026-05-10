@@ -4,6 +4,7 @@
 
 /* DaisyUI simple corporate mode */
 @layer base {
+
   :root,
   [data-theme="corporate"] {
     --rounded-box: 0.75rem;
@@ -188,7 +189,7 @@ button:active,
   @apply p-4 md:p-5;
 }
 
-.mobile-plain-scope .field-stack > * + * {
+.mobile-plain-scope .field-stack>*+* {
   margin-top: 0.625rem;
 }
 
@@ -368,7 +369,7 @@ button:active,
   gap: 0.75rem;
 }
 
-.mobile-plain-scope .mobile-row > .btn {
+.mobile-plain-scope .mobile-row>.btn {
   flex-shrink: 0;
 }
 

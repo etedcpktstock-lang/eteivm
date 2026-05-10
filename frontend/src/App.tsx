@@ -425,7 +425,7 @@ const itemsList = [
 return itemsList.filter(nav => {
 // มือถือ: เน้นเมนูงานหน้างานที่ต้องใช้บ่อยและกดง่าย
 if (isMobile) {
-const mobilePrimaryTabs = new Set(['welcome', 'receive', 'issue', 'return', 'repair', 'transfer', 'history', 'reports', 'job-request', 'logistics']);
+const mobilePrimaryTabs = new Set(['welcome', 'receive', 'issue', 'return', 'repair', 'transfer', 'history', 'reports', 'job-request', 'logistics', 'survey']);
 if (!mobilePrimaryTabs.has(nav.id)) return false;
 }
 
@@ -538,7 +538,7 @@ className={`shrink-0 rounded-xl border px-3 py-2 text-[12px] font-bold flex item
 {activeTab === 'job-request' && <JobRequestForm items={items} warehouses={warehouses} customers={customers} operatorName={user.name} thaiAddressData={thaiAddressData} transactions={transactions} logisticsJobs={logisticsJobs} onSuccess={() => { fetchData(true); }} onClose={() => setActiveTab('welcome')} />}
 
 {activeTab === 'repair' && <RepairManagement items={items} transactions={transactions} customers={customers} operatorName={user.name} onSuccess={() => fetchData(true)} onClose={() => setActiveTab('welcome')} loading={loading} />}
-{activeTab === 'logistics' && <div className="plain-page-frame plain-scope"><LogisticsDashboard items={items} customers={customers} operatorName={user.name} onNavigateToTab={handleNavigateToJobForm} onSuccess={() => fetchData(true)} initialTab={logisticsSubTab} transactions={transactions} loading={loading} /></div>}
+{activeTab === 'logistics' && <LogisticsDashboard items={items} customers={customers} operatorName={user.name} onNavigateToTab={handleNavigateToJobForm} onSuccess={() => fetchData(true)} initialTab={logisticsSubTab} transactions={transactions} loading={loading} />}
 {activeTab === 'transfer' && <TransferForm items={items} warehouses={warehouses} operatorName={user.name} transactions={transactions} thaiAddressData={thaiAddressData} onSuccess={() => { fetchData(false); playSuccessSound(); }} />}
 {activeTab === 'audit' && <div className="plain-page-frame plain-scope"><AuditLog transactions={transactions} user={user} /></div>}
 {activeTab === 'survey' && <div className="plain-page-frame plain-scope"><CustomerSurvey items={items} customers={customers} transactions={transactions} logisticsJobs={logisticsJobs} operatorName={user.name} onRefresh={() => fetchData(true)} onClose={() => setActiveTab('welcome')} thaiAddressData={thaiAddressData} /></div>}

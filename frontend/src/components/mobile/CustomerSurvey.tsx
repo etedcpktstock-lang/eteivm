@@ -25,6 +25,7 @@ import { CustomerSurveyHistory } from './CustomerSurveyHistory';
 import CustomerQuickEdit from '../shared/CustomerQuickEdit';
 import { useThaiAddress } from '../../hooks/useThaiAddress';
 import { usePossession } from '../../hooks/usePossession';
+import { compressImage } from '../../utils/fileUtils';
 import { TRANSACTION_STATUSES } from '../../constants/logisticsConstants';
 import type { Customer, Transaction, MaterialItem } from '../../types';
 
@@ -178,7 +179,7 @@ export default function CustomerSurvey({
  setError("ไม่สามารถเข้าถึงตำแหน่งได้ กรุณาเปิด GPS"); 
  setLoading(false); 
  },
- { enableHighAccuracy: true, timeout: 10000 }
+ { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
  );
  };
 
@@ -192,7 +193,7 @@ export default function CustomerSurvey({
  navigator.geolocation.getCurrentPosition(
  (pos) => { setNewLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setLoading(false); },
  () => { setError("ไม่สามารถเข้าถึงพิกัดได้ กรุณาเปิด GPS"); setLoading(false); },
- { enableHighAccuracy: true, timeout: 10000 }
+ { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
  );
  };
 
@@ -257,15 +258,27 @@ export default function CustomerSurvey({
 
  return (
  <div className="mobile-page-frame max-w-2xl space-y-4">
- <div className="flex items-center gap-4 mb-2">
- <button onClick={() => selectedCustomer ? setSelectedCustomer(null) : onClose()} className="w-10 h-10 bg-white rounded-xl border border-slate-100 flex items-center justify-center text-slate-400">
- <ArrowLeft size={20} />
- </button>
- <div>
- <h1 className="mobile-form-hero-title">สำรวจลูกค้า</h1>
- <p className="mobile-form-hero-subtitle mt-1">ตรวจสอบข้อมูลหน้าร้าน</p>
- </div>
- </div>
+      <div className="sticky top-0 z-50 bg-slate-50/90 backdrop-blur-2xl border-b border-slate-200/60 pb-4 pt-6 px-4 mb-5 -mx-2 transition-all duration-300">
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-3.5">
+            <div className="relative">
+              <div className="w-12 h-12 bg-emerald-600 rounded-[16px] flex items-center justify-center text-white shadow-[0_4px_12px_rgba(16,185,129,0.3)]">
+                <span className="material-symbols-outlined text-[24px] font-bold">person_search</span>
+              </div>
+            </div>
+            <div className="flex flex-col justify-center text-left">
+              <h2 className="text-[20px] font-black text-slate-900 tracking-tight leading-none mb-1">สำรวจลูกค้า</h2>
+              <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.15em] leading-none opacity-80">Customer Survey</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => selectedCustomer ? setSelectedCustomer(null) : onClose()}
+            className="w-10 h-10 bg-white/80 backdrop-blur-md rounded-full flex items-center justify-center text-slate-400 shadow-sm border border-slate-200/80 hover:bg-white hover:text-rose-500 active:scale-90 transition-all duration-200 shrink-0"
+          >
+            <span className="material-symbols-outlined text-[20px]">{selectedCustomer ? 'arrow_back_ios_new' : 'close'}</span>
+          </button>
+        </div>
+      </div>
 
  <ImageLightbox isOpen={!!previewImage} imageUrl={previewImage || ''} onClose={() => setPreviewImage(null)} />
  <ResultsMapModal 
@@ -277,66 +290,65 @@ export default function CustomerSurvey({
  thaiAddressData={thaiAddressData}
  />
 
- {!selectedCustomer ? (
- <div className="space-y-4 fade-in slide-in-">
- <div className="flex flex-col space-y-3">
- <div className="flex gap-2">
- <div className="relative flex-1">
- <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={20} />
- <input
- type="text"
- placeholder="พิมพ์รหัส CV หรือชื่อร้าน..."
- value={searchTerm}
- onChange={(e) => setSearchTerm(e.target.value)}
- onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
- className="w-full h-16 bg-white border border-slate-200 rounded-2xl pl-16 pr-6 text-sm font-bold outline-none focus:border-emerald-500"
- />
- </div>
- <button 
- onClick={handleNearbyToggle} 
- disabled={loading}
- className={`btn no-animation w-16 h-16 rounded-2xl flex items-center justify-center ${isNearbyMode ? 'bg-primary text-white' : 'bg-white text-slate-400 border border-slate-100'}`}
- >
- <Compass size={24} className={loading && isNearbyMode ? '' : ''} />
- </button>
- </div>
+  {!selectedCustomer ? (
+  <div className="space-y-4 fade-in">
+          <div className="flex flex-col space-y-3.5">
+            <div className="flex gap-2 items-center">
+              <input
+                type="text"
+                placeholder="ค้นหารหัส CV หรือชื่อร้าน..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                style={{ height: '48px' }}
+                className="flex-1 bg-white border border-slate-200 rounded-[16px] px-4 text-[14px] font-bold text-slate-800 placeholder-slate-400 outline-none focus:border-emerald-500 transition-all duration-300 min-w-0"
+              />
+              <button 
+                onClick={handleNearbyToggle} 
+                disabled={loading}
+                style={{ width: '48px', height: '48px' }}
+                className={`!p-0 shrink-0 rounded-[16px] flex items-center justify-center transition-all duration-300 border ${isNearbyMode ? '!bg-emerald-500 !text-white !border-emerald-500' : 'bg-white text-slate-400 border-slate-200 hover:text-emerald-500'}`}
+              >
+                <span className={`material-symbols-outlined text-[22px] ${loading && isNearbyMode ? 'animate-spin' : ''}`}>explore</span>
+              </button>
+            </div>
 
- <div className="flex gap-2">
- <button onClick={() => handleSearch()} disabled={loading} className="btn no-animation flex-1 h-12 btn-primary text-white rounded-xl font-semibold text-[12px] flex items-center justify-center gap-2 disabled:opacity-50">
- {loading && !isNearbyMode ? <RefreshCw size={18} className="" /> : <Search size={18} />} ค้นหาลูกค้า
- </button>
- <button 
- onClick={handleAddNewCustomer} 
- className="btn no-animation flex-1 h-12 bg-emerald-500 text-white rounded-xl font-black text-[12px] uppercase tracking-widest flex items-center justify-center gap-2"
- >
- <CheckCircle size={18} /> เพิ่มลูกค้าใหม่
- </button>
- </div>
- {isNearbyMode && searchResults.length > 0 && (
- <button 
- onClick={() => setShowResultsMap(true)} 
- className="btn no-animation w-full h-12 btn-neutral text-white rounded-xl font-semibold text-[12px] flex items-center justify-center gap-2"
- >
- <MapPin size={18} /> ดูแผนที่ร้านรอบตัว
- </button>
- )}
- </div>
- <div className="space-y-2">
+            <div className="flex gap-2">
+              <button onClick={() => handleSearch()} disabled={loading} className="flex-1 !h-[50px] bg-slate-900 text-white rounded-[16px] font-black text-[13px] flex items-center justify-center gap-1.5 disabled:opacity-50 hover:bg-slate-800 transition-colors shadow-sm min-w-0">
+                {loading && !isNearbyMode ? <span className="material-symbols-outlined text-[18px] animate-spin">refresh</span> : <span className="material-symbols-outlined text-[18px]">search</span>} ค้นหาลูกค้า
+              </button>
+              <button 
+                onClick={handleAddNewCustomer} 
+                className="flex-1 !h-[50px] bg-emerald-50 text-emerald-600 rounded-[16px] font-black text-[12px] uppercase tracking-wider flex items-center justify-center gap-1.5 border border-emerald-100 hover:bg-emerald-200 transition-colors shadow-sm min-w-0"
+              >
+                <span className="material-symbols-outlined text-[18px]">person_add</span> เพิ่มลูกค้าใหม่
+              </button>
+            </div>
+            {isNearbyMode && searchResults.length > 0 && (
+              <button 
+                onClick={() => setShowResultsMap(true)} 
+                className="w-full !h-[44px] bg-slate-100/80 text-slate-600 rounded-[14px] font-black text-[12px] flex items-center justify-center gap-2 hover:bg-slate-200 transition-colors border border-slate-200/50"
+              >
+                <span className="material-symbols-outlined text-[18px]">map</span> ดูแผนที่ร้านรอบตัว
+              </button>
+            )}
+          </div>
+ <div className="space-y-2.5 pb-10">
  {searchResults.map(c => (
- <button key={c.cv} onClick={() => handleSelectCustomer(c)} className="w-full mobile-row flex items-center justify-between p-5 bg-white border border-slate-100 rounded-xl text-left group">
- <div className="flex items-center gap-4">
- <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400">
- <Navigation size={22} />
+ <button key={c.cv} onClick={() => handleSelectCustomer(c)} className="w-full flex items-center justify-between p-4 bg-white/80 backdrop-blur-md border border-slate-100 rounded-[20px] text-left shadow-[0_2px_10px_rgba(0,0,0,0.02)] active:scale-[0.98] transition-all group">
+ <div className="flex items-center gap-3.5 min-w-0">
+ <div className="w-11 h-11 shrink-0 bg-slate-50 border border-slate-100 rounded-[14px] flex items-center justify-center text-slate-400">
+ <Navigation size={20} />
  </div>
- <div>
- <h3 className="text-sm font-black text-slate-800">{c.name}</h3>
- <div className="flex flex-wrap items-center gap-2 mt-1.5">
- <div className="bg-slate-900 px-3 py-1 rounded-lg">
- <p className="text-[15px] font-black text-white uppercase tracking-wider">CV: {c.cv}</p>
+ <div className="min-w-0">
+ <h3 className="text-[14px] font-black text-slate-800 truncate">{c.name}</h3>
+ <div className="flex flex-wrap items-center gap-2 mt-1">
+ <div className="bg-slate-900 px-2.5 py-0.5 rounded-[8px]">
+ <p className="text-[12px] font-black text-white uppercase tracking-wider">CV: {c.cv}</p>
  </div>
  {(c as any).distanceValue !== undefined && (c as any).distanceValue < 999999 && (
- <div className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-md text-[9px] font-black uppercase">
- ห่างประมาณ { (c as any).distanceValue.toFixed(2) } กม.
+ <div className="px-2 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-100/50 rounded-[6px] text-[10px] font-black uppercase">
+ ห่าง { (c as any).distanceValue.toFixed(2) } กม.
  </div>
  )}
  </div>
@@ -350,179 +362,238 @@ export default function CustomerSurvey({
  ) : (
  <AnimatePresence mode="wait">
  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
- <div className="bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden">
- <div className="bg-[#0b1b32] p-8 text-white relative">
- <div className="mobile-row flex items-center justify-between">
- <div>
- <h2 className="text-2xl font-black tracking-tight">{isReadOnly ? 'ข้อมูลลูกค้า' : 'แก้ไขข้อมูลลูกค้า'}</h2>
- <div className="inline-block bg-black px-3 py-1 rounded-lg mt-2 border border-white/10">
- <p className="text-[15px] font-black text-white uppercase">CV: {selectedCustomer.cv}</p>
- </div>
- </div>
- <button onClick={() => setIsReadOnly(!isReadOnly)} className={`w-10 h-10 rounded-xl flex items-center justify-center ${isReadOnly ? 'bg-white/10 text-white/60' : 'bg-emerald-500 text-white '}`}>
- {isReadOnly ? <Edit size={18} /> : <X size={18} />}
- </button>
- </div>
- </div>
+              <div className="bg-white/90 backdrop-blur-2xl rounded-[24px] border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.06)] overflow-hidden relative">
+                <div className="p-5 sm:p-6 border-b border-slate-100/50 bg-white/40">
+                  <div className="mobile-row flex items-center justify-between">
+                    <div>
+                      <h2 className="text-[20px] sm:text-[22px] font-black text-slate-800 tracking-tight">{isReadOnly ? 'ข้อมูลลูกค้า' : 'แก้ไขข้อมูลลูกค้า'}</h2>
+                      <div className="inline-flex bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-[10px] mt-1.5 border border-emerald-100/50 shadow-[0_2px_10px_rgba(16,185,129,0.05)]">
+                        <p className="text-[11px] font-black uppercase tracking-widest">CV: {selectedCustomer.cv}</p>
+                      </div>
+                    </div>
+                    <button onClick={() => setIsReadOnly(!isReadOnly)} className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 ${isReadOnly ? 'bg-white text-emerald-600 shadow-[0_2px_12px_rgba(0,0,0,0.06)] border border-slate-100 hover:scale-105' : 'bg-emerald-500 text-white shadow-[0_4px_12px_rgba(16,185,129,0.3)] hover:bg-emerald-600'}`}>
+                      {isReadOnly ? <span className="material-symbols-outlined text-[20px]">edit</span> : <span className="material-symbols-outlined text-[20px]">close</span>}
+                    </button>
+                  </div>
+                </div>
  
- <div className="p-8 space-y-4">
- {customerDraft && (
- <div className="grid grid-cols-1 gap-4 text-left">
- <div className="flex flex-col">
- <span className="text-[11px] font-semibold text-slate-500 tracking-tight ml-1">ชื่อร้าน/ลูกค้า:</span>
- {isReadOnly ? <div className="px-4 py-3.5 bg-slate-50 rounded-2xl font-bold text-slate-800">{customerDraft.name}</div> : <input type="text" value={customerDraft.name} onChange={e => setCustomerDraft({...customerDraft, name: e.target.value})} className="px-4 py-3.5 bg-white rounded-2xl border border-emerald-500/30 font-bold text-slate-800 outline-none focus:border-emerald-500" />}
- </div>
+ <div className="p-4 sm:p-6 space-y-4">
+  {customerDraft && (
+    <div className="grid grid-cols-1 gap-4 text-left">
+      <div className="flex flex-col space-y-1.5">
+        <span className="text-[11px] font-black text-slate-400 uppercase tracking-wider ml-1">ชื่อร้าน/ลูกค้า</span>
+        {isReadOnly ? 
+          <div className="px-4 py-3.5 bg-slate-50/80 rounded-[16px] text-[14px] font-bold text-slate-800 flex items-center gap-3"><span className="material-symbols-outlined text-emerald-400 text-[20px]">store</span><span className="truncate">{customerDraft.name}</span></div> : 
+          <div className="relative group"><span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors text-[20px]">store</span><input type="text" value={customerDraft.name} onChange={e => setCustomerDraft({...customerDraft, name: e.target.value})} className="w-full !pl-10 !pr-4 !h-[50px] !bg-slate-50/50 !border-slate-200/80 !rounded-[16px] !text-[14px] !font-bold text-slate-800 outline-none focus:!bg-white focus:!border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-sm" /></div>
+        }
+      </div>
 
- <div className="flex flex-col">
- <span className="text-[11px] font-semibold text-slate-500 tracking-tight ml-1">เบอร์โทรศัพท์:</span>
- {isReadOnly ? <div className="px-4 py-3.5 bg-slate-50 rounded-2xl font-bold text-slate-800 flex items-center gap-2"><Phone size={14} className="text-emerald-500" /> {customerDraft.phone || '-'}</div> : <input type="text" value={customerDraft.phone || ''} onChange={e => setCustomerDraft({...customerDraft, phone: e.target.value})} className="px-4 py-3.5 bg-white rounded-2xl border border-emerald-500/30 font-bold text-slate-800 outline-none focus:border-emerald-500" />}
- </div>
+      <div className="flex flex-col space-y-1.5">
+        <span className="text-[11px] font-black text-slate-400 uppercase tracking-wider ml-1">เบอร์โทรศัพท์</span>
+        {isReadOnly ? 
+          <div className="px-4 py-3.5 bg-slate-50/80 rounded-[16px] text-[14px] font-bold text-slate-800 flex items-center gap-3"><span className="material-symbols-outlined text-emerald-400 text-[20px]">call</span>{customerDraft.phone || '-'}</div> : 
+          <div className="relative group"><span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors text-[20px]">call</span><input type="text" value={customerDraft.phone || ''} onChange={e => setCustomerDraft({...customerDraft, phone: e.target.value})} className="w-full !pl-10 !pr-4 !h-[50px] !bg-slate-50/50 !border-slate-200/80 !rounded-[16px] !text-[14px] !font-bold text-slate-800 outline-none focus:!bg-white focus:!border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-sm" /></div>
+        }
+      </div>
 
- <div className="flex flex-col">
- <span className="text-[11px] font-semibold text-slate-500 tracking-tight ml-1">ที่อยู่:</span>
- {isReadOnly ? <div className="px-4 py-3.5 bg-slate-50 rounded-2xl font-bold text-slate-800 leading-relaxed min-h-[60px]">{customerDraft.address || '-'}</div> : <textarea value={customerDraft.address || ''} onChange={e => setCustomerDraft({...customerDraft, address: e.target.value})} className="px-4 py-3.5 bg-white rounded-2xl border border-emerald-500/30 font-bold text-slate-800 outline-none min-h-[80px] focus:border-emerald-500" />}
- </div>
+      <div className="flex flex-col space-y-1.5">
+        <span className="text-[11px] font-black text-slate-400 uppercase tracking-wider ml-1">ที่อยู่</span>
+        {isReadOnly ? 
+          <div className="px-4 py-3.5 bg-slate-50/80 rounded-[16px] text-[14px] font-bold text-slate-800 flex items-start gap-3 min-h-[70px]"><span className="material-symbols-outlined text-emerald-400 text-[20px] mt-0.5">location_on</span><span className="leading-relaxed">{customerDraft.address || '-'}</span></div> : 
+          <div className="relative group"><span className="material-symbols-outlined absolute left-3.5 top-3.5 text-slate-400 group-focus-within:text-emerald-500 transition-colors text-[20px]">location_on</span><textarea value={customerDraft.address || ''} onChange={e => setCustomerDraft({...customerDraft, address: e.target.value})} className="w-full !pl-10 !pr-4 !py-3.5 !bg-slate-50/50 !border-slate-200/80 !rounded-[16px] !text-[14px] !font-bold text-slate-800 outline-none focus:!bg-white focus:!border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 min-h-[90px] transition-all shadow-sm" /></div>
+        }
+      </div>
 
- {!isReadOnly ? (
- <div className="grid grid-cols-2 gap-4">
- <div className="flex flex-col">
- <span className="text-[11px] font-semibold text-slate-500 tracking-tight ml-1">จังหวัด:</span>
- <select value={customerDraft.province || ''} onChange={e => setCustomerDraft({...customerDraft, province: e.target.value, district: '', subdistrict: '', zipcode: ''})} className="px-4 py-3.5 bg-white rounded-2xl border border-emerald-500/30 font-bold text-slate-800 outline-none h-14 focus:border-emerald-500">
- <option value="">-- จังหวัด --</option>
- {(Array.isArray(thaiAddressData) ? thaiAddressData : []).map(p => <option key={p.name_th} value={p.name_th}>{p.name_th}</option>)}
- </select>
- </div>
- <div className="flex flex-col">
- <span className="text-[11px] font-semibold text-slate-500 tracking-tight ml-1">อำเภอ:</span>
- <select value={customerDraft.district || ''} disabled={!customerDraft.province} onChange={e => setCustomerDraft({...customerDraft, district: e.target.value, subdistrict: '', zipcode: ''})} className="px-4 py-3.5 bg-white rounded-2xl border border-emerald-500/30 font-bold text-slate-800 outline-none h-14 disabled:opacity-50">
- <option value="">-- อำเภอ --</option>
- {(Array.isArray(availableDistricts) ? availableDistricts : []).map((d: any) => <option key={d} value={d}>{d}</option>)}
- </select>
- </div>
- <div className="flex flex-col">
- <span className="text-[11px] font-semibold text-slate-500 tracking-tight ml-1">ตำบล:</span>
- <select value={customerDraft.subdistrict || ''} disabled={!customerDraft.district} onChange={e => {
- const t = (Array.isArray(availableSubdistricts) ? availableSubdistricts : []).find((tam: any) => tam.name_th === e.target.value);
- setCustomerDraft({...customerDraft, subdistrict: e.target.value, zipcode: t ? String(t.zip_code || t.zipcode || '') : ''});
- }} className="px-4 py-3.5 bg-white rounded-2xl border border-emerald-500/30 font-bold text-slate-800 outline-none h-14 disabled:opacity-50">
- <option value="">-- ตำบล --</option>
- {(Array.isArray(availableSubdistricts) ? availableSubdistricts : []).map((t: any) => <option key={t.name_th} value={t.name_th}>{t.name_th}</option>)}
- </select>
- </div>
- <div className="flex flex-col">
- <span className="text-[11px] font-semibold text-slate-500 tracking-tight ml-1">รหัสไปรษณีย์:</span>
- <div className="px-4 py-3.5 bg-slate-50 rounded-2xl border border-slate-100 font-bold text-slate-400 flex items-center h-14">{customerDraft.zipcode || '-'}</div>
- </div>
- </div>
- ) : (
- <div className="grid grid-cols-4 gap-2">
- <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex flex-col min-w-0"><span className="text-[8px] font-black text-slate-300 uppercase">จังหวัด</span><span className="text-[11px] font-bold text-slate-700 truncate">{customerDraft.province || '-'}</span></div>
- <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex flex-col min-w-0"><span className="text-[8px] font-black text-slate-300 uppercase">อำเภอ</span><span className="text-[11px] font-bold text-slate-700 truncate">{customerDraft.district || '-'}</span></div>
- <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex flex-col min-w-0"><span className="text-[8px] font-black text-slate-300 uppercase">ตำบล</span><span className="text-[11px] font-bold text-slate-700 truncate">{customerDraft.subdistrict || '-'}</span></div>
- <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex flex-col min-w-0"><span className="text-[8px] font-black text-slate-300 uppercase">รหัสไปรษณีย์</span><span className="text-[11px] font-bold text-slate-700 truncate">{customerDraft.zipcode || '-'}</span></div>
- </div>
- )}
- </div>
- )}
+      {!isReadOnly ? (
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col space-y-1.5">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">จังหวัด</span>
+            <select value={customerDraft.province || ''} onChange={e => setCustomerDraft({...customerDraft, province: e.target.value, district: '', subdistrict: '', zipcode: ''})} className="w-full !px-3 !h-[50px] !bg-slate-50/50 !border-slate-200/80 !rounded-[16px] !text-[13px] !font-bold text-slate-800 outline-none focus:!bg-white focus:!border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-sm">
+              <option value="">-- จังหวัด --</option>
+              {(Array.isArray(thaiAddressData) ? thaiAddressData : []).map(p => <option key={p.name_th} value={p.name_th}>{p.name_th}</option>)}
+            </select>
+          </div>
+          <div className="flex flex-col space-y-1.5">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">อำเภอ</span>
+            <select value={customerDraft.district || ''} disabled={!customerDraft.province} onChange={e => setCustomerDraft({...customerDraft, district: e.target.value, subdistrict: '', zipcode: ''})} className="w-full !px-3 !h-[50px] !bg-slate-50/50 !border-slate-200/80 !rounded-[16px] !text-[13px] !font-bold text-slate-800 outline-none focus:!bg-white focus:!border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 disabled:opacity-50 transition-all shadow-sm">
+              <option value="">-- อำเภอ --</option>
+              {(Array.isArray(availableDistricts) ? availableDistricts : []).map((d: any) => <option key={d} value={d}>{d}</option>)}
+            </select>
+          </div>
+          <div className="flex flex-col space-y-1.5">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">ตำบล</span>
+            <select value={customerDraft.subdistrict || ''} disabled={!customerDraft.district} onChange={e => {
+              const t = (Array.isArray(availableSubdistricts) ? availableSubdistricts : []).find((tam: any) => tam.name_th === e.target.value);
+              setCustomerDraft({...customerDraft, subdistrict: e.target.value, zipcode: t ? String(t.zip_code || t.zipcode || '') : ''});
+            }} className="w-full !px-3 !h-[50px] !bg-slate-50/50 !border-slate-200/80 !rounded-[16px] !text-[13px] !font-bold text-slate-800 outline-none focus:!bg-white focus:!border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 disabled:opacity-50 transition-all shadow-sm">
+              <option value="">-- ตำบล --</option>
+              {(Array.isArray(availableSubdistricts) ? availableSubdistricts : []).map((t: any) => <option key={t.name_th} value={t.name_th}>{t.name_th}</option>)}
+            </select>
+          </div>
+          <div className="flex flex-col space-y-1.5">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">รหัสไปรษณีย์</span>
+            <div className="w-full !px-3 !h-[50px] !bg-slate-100/50 !border-slate-200/50 !rounded-[16px] !text-[14px] !font-bold text-slate-500 flex items-center border">{customerDraft.zipcode || '-'}</div>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-4 gap-2">
+          <div className="py-2.5 px-1 bg-slate-50/80 rounded-[14px] flex flex-col items-center justify-center min-w-0"><span className="text-[9px] font-black text-slate-400 uppercase tracking-wider mb-0.5">จังหวัด</span><span className="text-[11px] font-bold text-slate-800 truncate w-full text-center px-1">{customerDraft.province || '-'}</span></div>
+          <div className="py-2.5 px-1 bg-slate-50/80 rounded-[14px] flex flex-col items-center justify-center min-w-0"><span className="text-[9px] font-black text-slate-400 uppercase tracking-wider mb-0.5">อำเภอ</span><span className="text-[11px] font-bold text-slate-800 truncate w-full text-center px-1">{customerDraft.district || '-'}</span></div>
+          <div className="py-2.5 px-1 bg-slate-50/80 rounded-[14px] flex flex-col items-center justify-center min-w-0"><span className="text-[9px] font-black text-slate-400 uppercase tracking-wider mb-0.5">ตำบล</span><span className="text-[11px] font-bold text-slate-800 truncate w-full text-center px-1">{customerDraft.subdistrict || '-'}</span></div>
+          <div className="py-2.5 px-1 bg-slate-50/80 rounded-[14px] flex flex-col items-center justify-center min-w-0"><span className="text-[9px] font-black text-slate-400 uppercase tracking-wider mb-0.5">รหัสฯ</span><span className="text-[11px] font-bold text-slate-800 truncate w-full text-center px-1">{customerDraft.zipcode || '-'}</span></div>
+        </div>
+      )}
+    </div>
+  )}
 
- <div className="flex gap-3">
- <button 
- onClick={handleGetLocation} 
- disabled={isReadOnly || loading} 
- className={`btn no-animation flex-1 h-16 rounded-xl flex items-center justify-center gap-3 font-black uppercase tracking-widest ${isReadOnly ? 'bg-slate-100 text-slate-300 ' : 'bg-emerald-600 text-white'}`}
- >
- <MapPin size={22} />
- {isReadOnly ? 'เปิดการแก้ไขก่อนจับพิกัด' : (newLocation ? 'จับพิกัดอีกครั้ง' : 'Check-In (จับพิกัด)')}
- </button>
- 
- {customerDraft?.lat && customerDraft?.lng && (
- <button 
- onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${customerDraft.lat},${customerDraft.lng}`, '_blank')}
- className="w-16 h-16 bg-blue-600 text-white rounded-xl flex items-center justify-center"
- title="นำทางด้วย Google Maps"
- >
- <Navigation size={24} />
- </button>
- )}
- </div>
- </div>
- </div>
+  <div className="flex gap-2.5 pt-1">
+    <button 
+      onClick={handleGetLocation} 
+      disabled={isReadOnly || loading} 
+      className={`flex-1 !h-[54px] !rounded-[16px] flex items-center justify-center gap-2 font-black uppercase tracking-widest transition-all ${isReadOnly ? '!bg-slate-50/80 !text-slate-400 !border !border-slate-200/80 shadow-sm' : '!bg-emerald-600 hover:!bg-emerald-700 !text-white shadow-[0_6px_16px_rgba(16,185,129,0.25)] !border !border-emerald-500/50 active:scale-[0.98]'}`}
+    >
+      <span className="material-symbols-outlined text-[20px]">my_location</span>
+      <span className="text-[13px]">{isReadOnly ? 'เปิดแก้ไขก่อนจับพิกัด' : (newLocation ? 'จับพิกัดอีกครั้ง' : 'Check-In (จับพิกัด)')}</span>
+    </button>
+    
+    {customerDraft?.lat && customerDraft?.lng && (
+      <button 
+        onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${customerDraft.lat},${customerDraft.lng}`, '_blank')}
+        className="w-[54px] !h-[54px] shrink-0 !bg-blue-600 hover:!bg-blue-700 shadow-[0_4px_12px_rgba(37,99,235,0.3)] !text-white !rounded-[16px] flex items-center justify-center transition-all !border-none"
+        title="นำทางด้วย Google Maps"
+      >
+        <span className="material-symbols-outlined text-[24px]">directions_car</span>
+      </button>
+    )}
+  </div>
+</div>
+</div>
 
- <div className="bg-white rounded-[2.5rem] border border-emerald-100 overflow-hidden p-6 space-y-4">
- <h3 className="text-lg font-black text-slate-800 tracking-tight flex items-center gap-2"><Package className="text-emerald-500" /> พัสดุในครอบครองของลูกค้า</h3>
- <div className="space-y-2">
- {possessionList.length === 0 ? (
- <p className="text-center py-6 text-slate-400 font-medium text-xs tracking-tight bg-slate-50 rounded-3xl">ไม่มีพัสดุในครอบครอง</p>
- ) : possessionList.map((it, idx) => {
- const condStr = it.condition ?` สภาพ ${it.condition}` : '';
- return (
- <div key={idx} className="flex flex-col p-4 bg-white border border-slate-100 rounded-3xl text-left">
- <div className="flex justify-between items-center">
- <p className="text-[13px] font-black leading-snug">
- <span className="text-slate-800">
- {it.name}{it.detail ?` ${it.detail}` : ''}{it.size ?` ขนาด ${it.size}` : ''}{condStr}
- </span>
- </p>
- <span className="text-[18px] font-black text-emerald-600 ml-4">{it.qty}</span>
- </div>
- </div>
- );
- })}
- </div>
- </div>
+<div className="bg-white/90 backdrop-blur-2xl rounded-[24px] border border-emerald-100/50 overflow-hidden p-5 sm:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.06)] space-y-4">
+  <div className="flex items-center gap-3">
+    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center shadow-[0_2px_10px_rgba(16,185,129,0.05)]">
+      <span className="material-symbols-outlined text-[20px]">inventory_2</span>
+    </div>
+    <h3 className="text-[18px] font-black text-slate-800 tracking-tight">พัสดุในครอบครอง</h3>
+  </div>
+  <div className="space-y-3">
+  {possessionList.length === 0 ? (
+    <div className="py-10 bg-slate-50/50 rounded-[20px] flex flex-col items-center justify-center text-slate-400 border border-slate-100 border-dashed">
+      <div className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center mb-3">
+        <span className="material-symbols-outlined text-[28px] text-slate-300">box</span>
+      </div>
+      <p className="font-bold text-[13px] tracking-tight">ไม่มีพัสดุในครอบครอง</p>
+    </div>
+  ) : possessionList.map((it, idx) => {
+    const condStr = it.condition ?` สภาพ ${it.condition}` : '';
+    return (
+      <div key={idx} className="flex flex-col p-5 bg-slate-50/50 rounded-[20px] text-left">
+        <div className="flex justify-between items-center">
+          <p className="text-[14px] font-black leading-snug">
+            <span className="text-slate-800">
+              {it.name}{it.detail ?` ${it.detail}` : ''}{it.size ?` ขนาด ${it.size}` : ''}{condStr}
+            </span>
+          </p>
+          <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center ml-4 shrink-0">
+            <span className="text-[16px] font-black text-emerald-600">{it.qty}</span>
+          </div>
+        </div>
+      </div>
+    );
+  })}
+  </div>
+</div>
 
- <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 space-y-4">
- <p className="text-[11px] font-semibold text-slate-500 tracking-tight ml-1">รูปถ่ายหลักฐานหน้าร้าน</p>
- <div className="flex justify-center py-2">
- <div className="relative group">
- {(() => {
- const masterPhoto = getMasterPhoto(customerDraft) || getMasterPhoto(selectedCustomer);
- const currentPhoto = photos[0] || masterPhoto;
- if (currentPhoto) {
- return (
- <div className="w-56 h-56 bg-slate-100 rounded-[2.5rem] overflow-hidden border-4 border-white relative group/img cursor-zoom-in" onClick={() => setPreviewImage(currentPhoto)}>
- <img src={currentPhoto} className="w-full h-full object-cover group-hover/img:scale-110" alt="store evidence" onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400?text=Image+Load+Error'; }} />
- <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/20 flex items-center justify-center">
- <ZoomIn size={40} className="text-white opacity-0 group-hover/img:opacity-100 scale-50 group-hover/img:scale-100" />
- </div>
- {!isReadOnly && photos[0] && (
- <button onClick={(e) => { e.stopPropagation(); setPhotos([]); }} className="absolute top-3 right-3 w-10 h-10 bg-rose-600 text-white rounded-2xl flex items-center justify-center"><X size={20} /></button>
- )}
- {!isReadOnly && !photos[0] && (
- <label className="absolute inset-0 bg-black/40 opacity-0 flex flex-col items-center justify-center text-white cursor-pointer" onClick={e => e.stopPropagation()}>
- <Camera size={40} className="mb-2" />
- <span className="text-[10px] font-semibold tracking-tight">คลิกเพื่อเปลี่ยนรูป</span>
- <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => {
- const file = e.target.files?.[0];
- if (file) { const reader = new FileReader(); reader.onloadend = () => setPhotos([reader.result as string]); reader.readAsDataURL(file); }
- }} />
- </label>
- )}
- </div>
- );
- }
- return (
- !isReadOnly ? (
- <label className="w-56 h-56 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2.5rem] flex flex-col items-center justify-center text-slate-300 cursor-pointer">
- <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4"><Camera size={32} className="text-emerald-500" /></div>
- <span className="text-[12px] font-semibold tracking-tight">ถ่ายรูปหน้าร้าน</span>
- <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => {
- const file = e.target.files?.[0];
- if (file) { const reader = new FileReader(); reader.onloadend = () => setPhotos([reader.result as string]); reader.readAsDataURL(file); }
- }} />
- </label>
- ) : (
- <div className="w-56 h-56 bg-slate-50 rounded-[2.5rem] flex flex-col items-center justify-center text-slate-200 border border-slate-100">
- <Camera size={40} className="mb-4 opacity-50" />
- <span className="text-[12px] font-semibold tracking-tight">ยังไม่มีรูปถ่าย</span>
- </div>
- )
- );
- })()}
- </div>
- </div>
- <textarea placeholder="เพิ่มหมายเหตุการสำรวจตรงนี้..." value={note} onChange={e => setNote(e.target.value)} className="w-full p-6 bg-slate-50 border border-slate-100 rounded-3xl text-sm font-bold outline-none min-h-[120px] focus:bg-white focus:border-emerald-500" />
- </div>
+<div className="rounded-[2rem] overflow-hidden border border-slate-100 shadow-[0_4px_24px_rgb(0,0,0,0.06)]">
+  {/* Section Header */}
+  <div className="bg-gradient-to-r from-slate-900 to-slate-800 px-6 py-4 flex items-center gap-3">
+    <div className="w-9 h-9 bg-emerald-500/20 rounded-xl flex items-center justify-center">
+      <span className="material-symbols-outlined text-emerald-400 text-[20px]">photo_camera</span>
+    </div>
+    <div>
+      <p className="text-[13px] font-black text-white tracking-tight leading-none">รูปถ่ายหลักฐานหน้าร้าน</p>
+      <p className="text-[10px] text-slate-400 font-medium mt-0.5 tracking-wider">STORE EVIDENCE PHOTO</p>
+    </div>
+  </div>
+
+  {/* Photo Area */}
+  <div className="bg-white p-5">
+    <div className="flex justify-center">
+      <div className="relative group">
+      {(() => {
+        const masterPhoto = getMasterPhoto(customerDraft) || getMasterPhoto(selectedCustomer);
+        const currentPhoto = photos[0] || masterPhoto;
+        if (currentPhoto) {
+          return (
+            <div className="w-full max-w-[280px] aspect-square bg-slate-100 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-lg relative group/img cursor-zoom-in" onClick={() => setPreviewImage(currentPhoto)}>
+              <img src={currentPhoto} className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-500" alt="store evidence" onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400?text=Image+Load+Error'; }} />
+              <div className="absolute inset-0 bg-slate-900/0 group-hover/img:bg-slate-900/20 flex items-center justify-center transition-all duration-300">
+                <span className="material-symbols-outlined text-white text-[48px] opacity-0 group-hover/img:opacity-100 scale-50 group-hover/img:scale-100 transition-all duration-300">zoom_in</span>
+              </div>
+              {!isReadOnly && photos[0] && (
+                <button onClick={(e) => { e.stopPropagation(); setPhotos([]); }} className="absolute top-4 right-4 w-12 h-12 bg-rose-500 hover:bg-rose-600 text-white shadow-lg rounded-2xl flex items-center justify-center transition-colors">
+                  <span className="material-symbols-outlined text-[24px]">close</span>
+                </button>
+              )}
+              {!isReadOnly && !photos[0] && (
+                <label className="absolute inset-0 bg-slate-900/60 opacity-0 flex flex-col items-center justify-center text-white cursor-pointer transition-opacity duration-300 hover:opacity-100" onClick={e => e.stopPropagation()}>
+                  <span className="material-symbols-outlined text-[48px] mb-2">add_a_photo</span>
+                  <span className="text-[13px] font-bold tracking-tight">คลิกเพื่อเปลี่ยนรูป</span>
+                  <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      compressImage(file).then(base64 => setPhotos([base64])).catch(console.error);
+                    }
+                  }} />
+                </label>
+              )}
+            </div>
+          );
+        }
+        return (
+          !isReadOnly ? (
+            <label className="w-[260px] h-[220px] flex flex-col items-center justify-center cursor-pointer group/upload relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-slate-50 to-emerald-50/40 border-2 border-dashed border-emerald-200 hover:border-emerald-400 hover:from-emerald-50 hover:to-emerald-100/40 transition-all duration-300">
+              {/* Animated pulse ring */}
+              <div className="absolute w-28 h-28 rounded-full bg-emerald-400/10 animate-ping" style={{ animationDuration: '2.5s' }} />
+              <div className="relative w-20 h-20 bg-white rounded-[1.5rem] flex items-center justify-center shadow-md mb-4 group-hover/upload:scale-110 transition-transform duration-300">
+                <span className="material-symbols-outlined text-emerald-500 text-[36px]">add_a_photo</span>
+              </div>
+              <span className="text-[15px] font-black text-slate-700 tracking-tight">เพิ่มรูปถ่ายหน้าร้าน</span>
+              <span className="text-[11px] font-semibold text-emerald-500 mt-1.5 bg-emerald-50 px-3 py-0.5 rounded-full">แตะเพื่อเปิดกล้อง</span>
+              <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  compressImage(file).then(base64 => setPhotos([base64])).catch(console.error);
+                }
+              }} />
+            </label>
+          ) : (
+            <div className="w-[260px] h-[220px] bg-slate-50 border border-slate-100 rounded-[2rem] flex flex-col items-center justify-center text-slate-300">
+              <span className="material-symbols-outlined text-[64px] mb-4 opacity-30">no_photography</span>
+              <span className="text-[14px] font-bold tracking-tight text-slate-400">ยังไม่มีรูปถ่าย</span>
+            </div>
+          )
+    );
+  })()}
+      </div>   {/* closes relative group */}
+    </div>     {/* closes flex justify-center */}
+  </div>       {/* closes bg-white p-5 Photo Area */}
+
+  {/* Notes Area */}
+  <div className="bg-slate-50 border-t border-slate-100 p-5">
+    <div className="flex items-start gap-3">
+      <div className="w-8 h-8 bg-white rounded-xl border border-slate-100 flex items-center justify-center mt-0.5 shrink-0 shadow-sm">
+        <span className="material-symbols-outlined text-slate-400 text-[18px]">edit_note</span>
+      </div>
+      <textarea
+        placeholder="เพิ่มหมายเหตุการสำรวจตรงนี้..."
+        value={note}
+        onChange={e => setNote(e.target.value)}
+        className="flex-1 bg-transparent text-sm font-medium text-slate-700 outline-none min-h-[90px] placeholder-slate-300 resize-none leading-relaxed"
+      />
+    </div>
+  </div>
+</div>
 
  <div className="pt-8 space-y-4">
  <div className="flex items-center gap-3 px-2">

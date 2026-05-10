@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Search, RotateCcw } from 'lucide-react';
 import { exportJsonToExcel } from '../../utils/excel';
+import { SARABUN_REGULAR, SARABUN_BOLD } from '../../utils/pdfFonts';
 
 // Add Sarabun font for PDF export (Standard for Thai)
 
@@ -171,11 +172,16 @@ return matchQty;
  ]);
  const doc = new jsPDF('l', 'mm', 'a4');
  
- // Setup Thai font (Note: In real app, you'd need to add font file to jsPDF)
- doc.setFont("Sarabun");
+ // Add Thai Fonts
+ doc.addFileToVFS('Sarabun-Regular.ttf', SARABUN_REGULAR);
+ doc.addFileToVFS('Sarabun-Bold.ttf', SARABUN_BOLD);
+ doc.addFont('Sarabun-Regular.ttf', 'Sarabun', 'normal');
+ doc.addFont('Sarabun-Bold.ttf', 'Sarabun', 'bold');
  
+ doc.setFont("Sarabun", "bold");
  doc.setFontSize(18);
  doc.text('ETE DC PHUKET - Inventory Stock Report', 14, 15);
+ doc.setFont("Sarabun", "normal");
  doc.setFontSize(10);
  doc.text(`Generated on: ${new Date().toLocaleString('th-TH')}`, 14, 22);
  doc.text(`Total Items: ${filteredItems.length}`, 14, 27);

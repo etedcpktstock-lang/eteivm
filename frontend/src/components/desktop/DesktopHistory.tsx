@@ -3,6 +3,7 @@ import { Search, Printer, Trash2, RefreshCw, ScanSearch, UserRound, ClipboardLis
 import { formatThaiDateTime } from '../../utils/dateTimeUtils';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { SARABUN_REGULAR, SARABUN_BOLD } from '../../utils/pdfFonts';
 
 interface DesktopHistoryProps {
   transactions: any[];
@@ -151,8 +152,17 @@ const DesktopHistory: React.FC<DesktopHistoryProps> = ({ transactions, user, cus
     if (!selectedRows.length || !firstTx) return;
 
     const doc = new jsPDF('p', 'mm', 'a4');
+    
+    // Add Thai Fonts
+    doc.addFileToVFS('Sarabun-Regular.ttf', SARABUN_REGULAR);
+    doc.addFileToVFS('Sarabun-Bold.ttf', SARABUN_BOLD);
+    doc.addFont('Sarabun-Regular.ttf', 'Sarabun', 'normal');
+    doc.addFont('Sarabun-Bold.ttf', 'Sarabun', 'bold');
+    
+    doc.setFont('Sarabun', 'bold');
     doc.setFontSize(16);
     doc.text('ETE DC PHUKET - TRANSACTION SLIP', 14, 18);
+    doc.setFont('Sarabun', 'normal');
     doc.setFontSize(10);
     doc.text(`เลขที่รายการ: ${getTxnNo(firstTx) || '-'}`, 14, 26);
     doc.text(`วันเวลา: ${formatThaiDateTime(firstTx['วัน-เวลา'])}`, 14, 31);
@@ -171,7 +181,7 @@ const DesktopHistory: React.FC<DesktopHistoryProps> = ({ transactions, user, cus
         t.สถานะ || '-',
       ]),
       theme: 'grid',
-      styles: { fontSize: 8 },
+      styles: { font: 'Sarabun', fontSize: 8 },
     });
 
     doc.save(`Receipt_${getTxnNo(firstTx) || 'NO-ID'}.pdf`);

@@ -330,7 +330,7 @@ rowIndex: explicitItemId || jobItem.rowIndex || jobItem.item_id,
  action: 'issue',
  item: finalItem,
  quantity: Number(jobItem.quantity || jobItem.จำนวน || 1),
- subItems: [], // No subItems — every item is its own card
+ subItems: [], // No subItems - every item is its own card
  displayString: finalDisplay,
  isFromJob: true
  };

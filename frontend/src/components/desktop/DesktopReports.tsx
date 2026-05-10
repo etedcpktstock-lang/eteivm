@@ -3,6 +3,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'rec
 import { BarChart3, CalendarRange, FileSpreadsheet, FileText, Filter, Search } from 'lucide-react';
 import type { Transaction } from '../../types';
 import { exportAoaToExcel } from '../../utils/excel';
+import { SARABUN_REGULAR, SARABUN_BOLD } from '../../utils/pdfFonts';
 
 interface DesktopReportsProps {
   transactions: Transaction[];
@@ -242,8 +243,17 @@ const DesktopReports: React.FC<DesktopReportsProps> = ({ transactions }) => {
     try {
       const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([import('jspdf'), import('jspdf-autotable')]);
       const doc = new jsPDF('l', 'mm', 'a4');
+      
+      // Add Thai Fonts
+      doc.addFileToVFS('Sarabun-Regular.ttf', SARABUN_REGULAR);
+      doc.addFileToVFS('Sarabun-Bold.ttf', SARABUN_BOLD);
+      doc.addFont('Sarabun-Regular.ttf', 'Sarabun', 'normal');
+      doc.addFont('Sarabun-Bold.ttf', 'Sarabun', 'bold');
+      
+      doc.setFont('Sarabun', 'bold');
       doc.setFontSize(14);
       doc.text('รายงานพัสดุ (ตามตัวกรอง)', 14, 12);
+      doc.setFont('Sarabun', 'normal');
       doc.setFontSize(9);
       doc.text(`วันที่: ${new Date().toLocaleString('th-TH')}`, 14, 18);
       doc.text(`Filter: ${flowFilter} | คำค้น: ${keyword || '-'} | ช่วงวันที่: ${dateFrom || '-'} - ${dateTo || '-'}`, 14, 23);
@@ -266,7 +276,7 @@ const DesktopReports: React.FC<DesktopReportsProps> = ({ transactions }) => {
         head: [['#', 'เลขที่รายการ', 'วัน-เวลา', 'ผู้ทำรายการ', 'รายการ', 'S/N', 'Asset Tag', 'สถานะ', 'จำนวน', 'ที่ไหน/CV']],
         body,
         theme: 'grid',
-        styles: { fontSize: 8 },
+        styles: { font: 'Sarabun', fontSize: 8 },
         headStyles: { fillColor: [51, 65, 85], textColor: 255 },
       });
 

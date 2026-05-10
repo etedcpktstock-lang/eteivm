@@ -24,12 +24,9 @@ const app = express();
 // Middleware
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl, etc.)
-    if (!origin) return callback(null, true);
-    // Allow localhost and common LAN IPs (192.168.x, 10.x, 172.x) for development
-    const allowed = /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|172\.\d+\.\d+\.\d+)(:\d+)?$/;
-    if (allowed.test(origin)) return callback(null, true);
-    callback(new Error(`CORS blocked: ${origin}`));
+    console.log(`🔍 CORS Request from origin: ${origin || 'No Origin'}`);
+    // Allow everything in development to fix "load failed" on mobile/other devices
+    callback(null, true);
   },
   credentials: true
 }));
@@ -57,7 +54,8 @@ app.use('/api/warehouses', authenticateToken, warehousesRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/items', authenticateToken, itemMergeRoutes); // merge-duplicates, find-duplicates
 // Compatibility fallback for Frontend initial data load logic that maps to multiple things
-app.get('/api/initialData', authenticateToken, async (_req, res) => {
+app.get('/api/initialData', authenticateToken, async (req, res) => {
+    console.log(`📥 [initialData] Loading data for user: ${req.user?.name || 'Unknown'}`);
     try {
         const [items, transactions, customers, zones, settingsList, permissionsList, warehouses] = await Promise.all([
           prisma.masterItem.findMany({ include: { warehouse_stocks: true } }),

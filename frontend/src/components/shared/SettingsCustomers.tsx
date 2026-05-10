@@ -7,6 +7,7 @@ import 'jspdf-autotable';
 import { usePossession } from '../../hooks/usePossession';
 import { exportJsonToExcel } from '../../utils/excel';
 import { formatThaiDate } from '../../utils/dateTimeUtils';
+import { SARABUN_REGULAR, SARABUN_BOLD } from '../../utils/pdfFonts';
 
 interface SettingsCustomersProps {
  customers: any[];
@@ -171,8 +172,14 @@ const SettingsCustomers: React.FC<SettingsCustomersProps> = ({
 
  const exportToPDF = () => {
  const doc = new jsPDF() as any;
- doc.addFont('https://fonts.gstatic.com/s/notosansthai/v32/6xKtdS_v8m69G29HjX1qf1m-PjD9_v1P.ttf', 'NotoSansThai', 'normal');
- doc.setFont('NotoSansThai');
+ 
+ // Add Thai Fonts
+ doc.addFileToVFS('Sarabun-Regular.ttf', SARABUN_REGULAR);
+ doc.addFileToVFS('Sarabun-Bold.ttf', SARABUN_BOLD);
+ doc.addFont('Sarabun-Regular.ttf', 'Sarabun', 'normal');
+ doc.addFont('Sarabun-Bold.ttf', 'Sarabun', 'bold');
+ 
+ doc.setFont('Sarabun', 'normal');
  
  const tableData = filteredCustomers.map(c => [
  c.cv, 
@@ -184,7 +191,7 @@ const SettingsCustomers: React.FC<SettingsCustomersProps> = ({
  doc.autoTable({
  head: [['CV', 'Name', 'Phone', 'Area']],
  body: tableData,
- styles: { font: 'NotoSansThai' }
+ styles: { font: 'Sarabun' }
  });
  doc.save("Customer_Database.pdf");
  };

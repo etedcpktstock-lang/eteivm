@@ -2,17 +2,17 @@
  * API Client — Core HTTP utilities, caching, and error normalization
  */
 
-export let API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3001/api`;
+export let API_URL = import.meta.env.VITE_API_URL || `/api`;
 
 // Force clear storage to prevent ghost connections
 localStorage.removeItem('ete_app_script_url');
 
 export const updateApiUrl = (newUrl: string) => {
-  API_URL = newUrl || import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3001/api`;
+  API_URL = newUrl || import.meta.env.VITE_API_URL || `/api`;
 };
 
 export const resetApiUrl = () => {
-  API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3001/api`;
+  API_URL = import.meta.env.VITE_API_URL || `/api`;
   localStorage.removeItem('ete_app_script_url');
 };
 

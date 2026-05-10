@@ -342,8 +342,13 @@
 }
 
 @keyframes plain-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .plain-table {
@@ -390,6 +395,7 @@
   color: var(--text);
 }
 
+/* 
 .plain-scope *,
 .plain-settings-scope * {
   animation: none !important;
@@ -399,7 +405,8 @@
   backdrop-filter: none !important;
   text-shadow: none !important;
 }
-
+*/
+/* 
 .plain-scope button,
 .plain-scope input,
 .plain-scope select,
@@ -428,7 +435,9 @@
   background: #fff !important;
   color: var(--text) !important;
 }
+*/
 
+/*
 .plain-scope .bg-indigo-600,
 .plain-scope .bg-emerald-600,
 .plain-scope .bg-blue-600,
@@ -439,8 +448,10 @@
   color: #fff !important;
   border-color: var(--lm-green) !important;
 }
+*/
 
 /* Global mobile plain scope for low-end devices */
+/*
 .mobile-plain-scope *,
 .mobile-plain-scope *::before,
 .mobile-plain-scope *::after {
@@ -451,6 +462,7 @@
   backdrop-filter: none !important;
   text-shadow: none !important;
 }
+*/
 
 .mobile-plain-scope button,
 .mobile-plain-scope [role="button"],
@@ -505,7 +517,11 @@
   white-space: nowrap;
   transition: background 0.15s;
 }
-.plain-btn-sm:hover { opacity: 0.85; }
+
+.plain-btn-sm:hover {
+  opacity: 0.85;
+}
+
 .plain-input {
   height: 32px;
   padding: 4px 8px;
@@ -517,4 +533,8 @@
   background: #f8fafc;
   outline: none;
 }
-.plain-input:focus { border-color: #6366f1; background: #fff; }
+
+.plain-input:focus {
+  border-color: #6366f1;
+  background: #fff;
+}

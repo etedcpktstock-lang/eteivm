@@ -1,7 +1,8 @@
 import React from 'react';
-import { Clock3, ShieldAlert, Siren } from 'lucide-react';
+import { Clock3, ShieldAlert, Siren, Activity, ArrowDownCircle, ArrowUpCircle, RefreshCw, AlertTriangle } from 'lucide-react';
 import { formatThaiDate, formatThaiTime } from '../../utils/dateTimeUtils';
 import type { DashboardAlertTone, DashboardAlert, KpiCard, OperationsCard, ComparisonStripItem, RankEntry, RecentTxn } from './DesktopDashboard.types';
+import { DashboardSparkline } from './DesktopDashboardSparkline';
 import './dashboard-tokens.css';
 
 const ALERT_TONE_STYLES: Record<DashboardAlertTone, { bg: string; border: string; text: string; badgeBg: string }> = {
@@ -13,32 +14,38 @@ const ALERT_TONE_STYLES: Record<DashboardAlertTone, { bg: string; border: string
 
 export function DashboardKpiGrid({ items, onNavigate }: { items: KpiCard[]; onNavigate: (tab?: any) => void }) {
   return (
-    <div className="plain-kpi-grid">
+    <div className="plain-kpi-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
       {items.map((kpi, idx) => (
         <div
           key={`${kpi.id}-${idx}`}
           className="plain-kpi"
           onClick={() => onNavigate(kpi.id)}
-          style={{ cursor: 'pointer', borderLeft: `4px solid ${kpi.tone}`, paddingLeft: 14 }}
+          style={{ cursor: 'pointer', padding: 16, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: 120 }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-            <div className="plain-kpi-label">{kpi.label}</div>
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 800,
-                color: kpi.tone,
-                background: `${kpi.tone}14`,
-                borderRadius: 999,
-                padding: '3px 8px',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {kpi.deltaLabel}
-            </span>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
+              <div className="plain-kpi-label" style={{ fontSize: 12, color: '#64748b' }}>{kpi.label}</div>
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 800,
+                  color: kpi.tone,
+                  background: `${kpi.tone}14`,
+                  borderRadius: 999,
+                  padding: '2px 8px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {kpi.deltaLabel}
+              </span>
+            </div>
+            <div className="plain-kpi-val" style={{ fontSize: 24, fontWeight: 800 }}>{Number(kpi.value || 0).toLocaleString()}</div>
           </div>
-          <div className="plain-kpi-val">{Number(kpi.value || 0).toLocaleString()}</div>
-          <div className="dash-hint" style={{ marginTop: 6, lineHeight: 1.4 }}>{kpi.footnote}</div>
+
+          <div style={{ marginTop: 12 }}>
+            {kpi.sparkline && <DashboardSparkline data={kpi.sparkline} color={kpi.tone} />}
+            <div className="dash-hint" style={{ marginTop: 6, fontSize: 10 }}>{kpi.footnote}</div>
+          </div>
         </div>
       ))}
     </div>
@@ -128,15 +135,15 @@ export function DashboardComparisonStrip({ items, onNavigate, formatDelta }: { i
           onClick={() => onNavigate(item.targetTab)}
           style={{ background: '#fff', border: `1px solid ${item.color}33`, borderRadius: 14, padding: '12px 14px', cursor: 'pointer' }}
         >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
-              <div style={{ fontSize: 11, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{item.label}</div>
-              <span className="dash-pill" style={{ color: item.color, background: `${item.color}14` }}>
-                {formatDelta(item.delta)}
-              </span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
-              <div className="dash-val-lg" style={{ fontSize: 22 }}>{item.current.toLocaleString()}</div>
-              <div className="dash-subtle">ก่อนหน้า {item.previous.toLocaleString()}</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
+            <div style={{ fontSize: 11, fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{item.label}</div>
+            <span className="dash-pill" style={{ color: item.color, background: `${item.color}14` }}>
+              {formatDelta(item.delta)}
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+            <div className="dash-val-lg" style={{ fontSize: 22 }}>{item.current.toLocaleString()}</div>
+            <div className="dash-subtle">ก่อนหน้า {item.previous.toLocaleString()}</div>
           </div>
         </div>
       ))}
@@ -220,50 +227,57 @@ export function DashboardTopEntitiesCard({ topActiveCustomers, topActiveZones, o
 }
 
 export function DashboardRecentActivityCard({ items, onNavigate }: { items: RecentTxn[]; onNavigate: (tab?: any) => void }) {
+  const getActionStyles = (status: string) => {
+    const s = (status || '').toLowerCase();
+    if (s.includes('เบิก') || s.includes('ส่งมอบ')) return { color: '#f59e0b', bg: '#fef3c7', icon: ArrowUpCircle, sign: '-' };
+    if (s.includes('รับ')) return { color: '#10b981', bg: '#dcfce7', icon: ArrowDownCircle, sign: '+' };
+    if (s.includes('ซ่อม')) return { color: '#8b5cf6', bg: '#f3e8ff', icon: RefreshCw, sign: '' };
+    return { color: '#64748b', bg: '#f1f5f9', icon: Activity, sign: '' };
+  };
+
   return (
-    <div className="plain-card">
+    <div className="plain-card" style={{ marginBottom: 0 }}>
       <div className="plain-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <span>กิจกรรมล่าสุด</span>
-        <button className="plain-btn-sm" onClick={() => onNavigate('history')} style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe' }}>เปิด history</button>
+        <button className="plain-btn-sm" onClick={() => onNavigate('history')} style={{ background: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0' }}>ประวัติทั้งหมด</button>
       </div>
-      <div className="desktop-scroll">
-        <table className="plain-table">
-          <thead>
-            <tr>
-              <th>เวลา</th>
-              <th>สถานะ</th>
-              <th>รายการ</th>
-              <th>ผู้ทำรายการ</th>
-              <th>เขต/CV</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((txn, i) => (
-              <tr key={i}>
-                <td>
-                  <div style={{ fontWeight: 600 }}>{formatThaiTime(txn['วัน-เวลา'])}</div>
-                  <div style={{ color: '#6b7280', fontSize: 11 }}>{formatThaiDate(txn['วัน-เวลา'])}</div>
-                </td>
-                <td>
-                  <span className="plain-badge">{txn.สถานะ || '-'}</span>
-                </td>
-                <td>
-                  <div style={{ fontWeight: 600 }}>{txn.รายการ || '-'}</div>
-                  <div style={{ color: '#6b7280', fontSize: 11 }}>{txn.ยี่ห้อหรือรูปแบบ || txn.ประเภท || txn['ยี่ห้อ/รายการ'] || '-'}</div>
-                </td>
-                <td>{txn.ผู้ทำรายการ || '-'}</td>
-                <td>{txn.เขตการทำงาน || txn.CV || '-'}</td>
-              </tr>
-            ))}
-            {items.length === 0 && (
-              <tr>
-                <td colSpan={5} style={{ textAlign: 'center', color: '#6b7280' }}>
-                  ยังไม่มีกิจกรรม
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      <div style={{ padding: '8px 16px 16px 16px', display: 'grid', gap: 0 }}>
+        {items.length > 0 ? items.map((txn, i) => {
+          const styles = getActionStyles(txn.สถานะ || '');
+          return (
+            <div
+              key={i}
+              onClick={() => onNavigate('history')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12,
+                padding: '12px 0',
+                borderBottom: i === items.length - 1 ? 'none' : '1px solid #f1f5f9',
+                cursor: 'pointer'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: styles.bg, color: styles.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <styles.icon size={18} />
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{txn.รายการ || '-'}</div>
+                  <div className="dash-hint" style={{ fontSize: 11 }}>{formatThaiTime(txn['วัน-เวลา'])} • {formatThaiDate(txn['วัน-เวลา'])}</div>
+                </div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: '#1e293b' }}>
+                  {styles.sign}{txn.จำนวน?.toLocaleString()}
+                </div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: styles.color, textTransform: 'uppercase' }}>{txn.สถานะ}</div>
+              </div>
+            </div>
+          );
+        }) : (
+          <div className="dash-empty">ยังไม่มีกิจกรรมล่าสุด</div>
+        )}
       </div>
     </div>
   );

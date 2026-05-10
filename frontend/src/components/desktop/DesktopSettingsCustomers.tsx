@@ -3,6 +3,7 @@ import { getCustomers, deleteCustomer, API_URL } from '../../api';
 import { Search, Plus, FileSpreadsheet, FileText, Phone, MapPin, Building2, ChevronDown, ChevronUp, Edit, Trash2, X, RotateCcw, Upload, Download, AlertTriangle, Maximize2 } from 'lucide-react';
 import { exportJsonToExcel } from '../../utils/excel';
 import { usePossession } from '../../hooks/usePossession';
+import { SARABUN_REGULAR, SARABUN_BOLD } from '../../utils/pdfFonts';
 
 const CustomerQuickEdit = lazy(() => import('../shared/CustomerQuickEdit'));
 
@@ -319,10 +320,13 @@ const DesktopSettingsCustomers: React.FC<Props> = ({
       const { jsPDF } = await import('jspdf');
       await import('jspdf-autotable');
       const doc = new (jsPDF as any)();
-      doc.addFont('https://fonts.gstatic.com/s/notosansthai/v32/6xKtdS_v8m69G29HjX1qf1m-PjD9_v1P.ttf', 'NotoSansThai', 'normal');
-      doc.setFont('NotoSansThai');
+      
+      doc.addFileToVFS('Sarabun-Regular.ttf', SARABUN_REGULAR);
+      doc.addFont('Sarabun-Regular.ttf', 'Sarabun', 'normal');
+      doc.setFont('Sarabun', 'normal');
+      
       const tableData = filtered.map(c => [c.cv, c.name, c.phone || '-', c.province || '-']);
-      doc.autoTable({ head: [['CV', 'ชื่อ', 'เบอร์โทร', 'จังหวัด']], body: tableData, styles: { font: 'NotoSansThai' } });
+      doc.autoTable({ head: [['CV', 'ชื่อ', 'เบอร์โทร', 'จังหวัด']], body: tableData, styles: { font: 'Sarabun' } });
       doc.save('Customer_Database.pdf');
       showMessage('ส่งออก PDF แล้ว');
     } catch { showMessage('ส่งออก PDF ไม่สำเร็จ'); }

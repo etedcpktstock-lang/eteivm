@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Search, RefreshCw, FileSpreadsheet, FileText, History, PackageSearch, Boxes, ScanSearch, Users } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import jsPDF from 'jspdf';
 import { exportJsonToExcel } from '../../utils/excel';
 import autoTable from 'jspdf-autotable';
 import { calculateCustomerInventory } from '../../utils/logisticsUtils';
+import { SARABUN_REGULAR, SARABUN_BOLD } from '../../utils/pdfFonts';
 
 interface DesktopInventoryProps {
   items: any[];
@@ -44,6 +46,7 @@ const DesktopInventory: React.FC<DesktopInventoryProps> = ({
   const [filterBrand, setFilterBrand] = useState('ทั้งหมด');
   const [filterCondition, setFilterCondition] = useState('ทั้งหมด');
   const [filterWarehouse, setFilterWarehouse] = useState('ทั้งหมด');
+  const [filterQuantity, setFilterQuantity] = useState<string>('');
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
   const transactionMetaMap = useMemo(() => {
@@ -108,13 +111,13 @@ const DesktopInventory: React.FC<DesktopInventoryProps> = ({
         const stockValues = selectedStock
           ? getWarehouseStockValues(selectedStock)
           : {
-              stock_qty: Number(item.จำนวน || 0),
-              transit_qty: Number(item.transit_qty || 0),
-              quarantine_qty: Number(item.quarantine_qty || 0),
-              repair_qty: Number(item.repair_qty || 0),
-              scrap_qty: Number(item.scrap_qty || 0),
-              lost_qty: Number(item.lost_qty || 0),
-            };
+            stock_qty: Number(item.จำนวน || 0),
+            transit_qty: Number(item.transit_qty || 0),
+            quarantine_qty: Number(item.quarantine_qty || 0),
+            repair_qty: Number(item.repair_qty || 0),
+            scrap_qty: Number(item.scrap_qty || 0),
+            lost_qty: Number(item.lost_qty || 0),
+          };
 
         const meta = transactionMetaMap.get(itemKey);
 
@@ -145,10 +148,12 @@ const DesktopInventory: React.FC<DesktopInventoryProps> = ({
         const matchType = filterType === 'ทั้งหมด' || item.ประเภท === filterType;
         const matchBrand = filterBrand === 'ทั้งหมด' || item.ยี่ห้อหรือรูปแบบ === filterBrand;
         const matchCond = filterCondition === 'ทั้งหมด' || item.สภาพ === filterCondition;
+        const totalQty = (Number(item.จำนวน) || 0) + (Number(item.transit_qty) || 0) + (Number(item.quarantine_qty) || 0) + (Number(item.repair_qty) || 0) + (Number(item.scrap_qty) || 0) + (Number(item.lost_qty) || 0);
+        const matchQty = filterQuantity === '' || totalQty < Number(filterQuantity);
 
-        return matchSearch && matchType && matchBrand && matchCond;
+        return matchSearch && matchType && matchBrand && matchCond && matchQty;
       });
-  }, [items, warehouses, transactions, customers, filterWarehouse, searchTerm, filterType, filterBrand, filterCondition, transactionMetaMap]);
+  }, [items, warehouses, transactions, customers, filterWarehouse, searchTerm, filterType, filterBrand, filterCondition, filterQuantity, transactionMetaMap]);
 
   useEffect(() => {
     if (!filteredItems.length) {
@@ -249,6 +254,7 @@ const DesktopInventory: React.FC<DesktopInventoryProps> = ({
     setFilterBrand('ทั้งหมด');
     setFilterCondition('ทั้งหมด');
     setFilterWarehouse('ทั้งหมด');
+    setFilterQuantity('');
   };
 
   const exportToExcel = async () => {
@@ -272,7 +278,14 @@ const DesktopInventory: React.FC<DesktopInventoryProps> = ({
 
   const exportToPDF = () => {
     const doc = new jsPDF('l', 'mm', 'a4');
-    doc.setFont('Sarabun');
+
+    // Add Thai Fonts
+    doc.addFileToVFS('Sarabun-Regular.ttf', SARABUN_REGULAR);
+    doc.addFileToVFS('Sarabun-Bold.ttf', SARABUN_BOLD);
+    doc.addFont('Sarabun-Regular.ttf', 'Sarabun', 'normal');
+    doc.addFont('Sarabun-Bold.ttf', 'Sarabun', 'bold');
+
+    doc.setFont('Sarabun', 'normal');
     doc.text('รายงานสต็อกพัสดุ', 14, 15);
 
     const tableData = filteredItems.map((item, idx) => [
@@ -298,6 +311,30 @@ const DesktopInventory: React.FC<DesktopInventoryProps> = ({
 
     doc.save(`Inventory_${Date.now()}.pdf`);
   };
+
+  const topItemsForChart = useMemo(() => {
+    return [...filteredItems].map(item => {
+      const ready = Number(item.จำนวน || 0);
+      const transit = Number(item.transit_qty || 0);
+      const quarantine = Number(item.quarantine_qty || 0);
+      const repair = Number(item.repair_qty || 0);
+      const scrapLost = Number(item.scrap_qty || 0) + Number(item.lost_qty || 0);
+      const total = ready + transit + quarantine + repair + scrapLost;
+      
+      const fullName = `${item.รายการ || ''} ${item.ยี่ห้อหรือรูปแบบ || ''} ${item.ขนาด || ''} ${item.สภาพ ? `(${item.สภาพ})` : ''}`.trim().replace(/\s+/g, ' ');
+      
+      return {
+        name: fullName.length > 30 ? fullName.substring(0, 30) + '...' : fullName,
+        fullName: fullName,
+        พร้อมใช้: ready,
+        ระหว่างส่ง: transit,
+        รอตรวจ: quarantine,
+        รอซ่อม: repair,
+        'ซาก/หาย': scrapLost,
+        total
+      };
+    }).sort((a, b) => b.total - a.total);
+  }, [filteredItems]);
 
   return (
     <div className="desktop-page">
@@ -336,6 +373,18 @@ const DesktopInventory: React.FC<DesktopInventoryProps> = ({
               {conditions.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
 
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <span style={{ position: 'absolute', left: 10, fontSize: 13, color: '#9ca3af' }}>&lt;</span>
+              <input
+                type="number"
+                className="plain-logout"
+                style={{ width: 100, paddingLeft: 22 }}
+                placeholder="ระบุจำนวน"
+                value={filterQuantity}
+                onChange={(e) => setFilterQuantity(e.target.value)}
+              />
+            </div>
+
             <button className="plain-logout" style={{ width: 72 }} onClick={resetFilters}>ล้าง</button>
             <button className="plain-logout" style={{ width: 40 }} onClick={exportToExcel}><FileSpreadsheet size={14} /></button>
             <button className="plain-logout" style={{ width: 40 }} onClick={exportToPDF}><FileText size={14} /></button>
@@ -344,6 +393,33 @@ const DesktopInventory: React.FC<DesktopInventoryProps> = ({
           </div>
         </div>
       </div>
+
+      {topItemsForChart.length > 0 && (
+        <div className="plain-card" style={{ padding: '16px 20px', marginBottom: 16 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 16, color: '#374151' }}>
+            กราฟภาพรวมสต็อก (ทั้งหมดตามตัวกรองปัจจุบัน)
+          </div>
+          <div style={{ height: 260, width: '100%' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={topItemsForChart} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#6b7280' }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: '#6b7280' }} tickLine={false} axisLine={false} />
+                <Tooltip 
+                  contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }} 
+                  cursor={{ fill: '#f3f4f6' }} 
+                />
+                <Legend wrapperStyle={{ fontSize: 12, paddingTop: 10 }} />
+                <Bar dataKey="พร้อมใช้" fill="#10b981" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="ระหว่างส่ง" fill="#3b82f6" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="รอตรวจ" fill="#f59e0b" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="รอซ่อม" fill="#f97316" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="ซาก/หาย" fill="#ef4444" radius={[2, 2, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
 
       <div className="desktop-split-grid desktop-split-grid--wide-right">
         <div className="plain-card">
@@ -568,3 +644,4 @@ const DesktopInventory: React.FC<DesktopInventoryProps> = ({
 };
 
 export default DesktopInventory;
+
