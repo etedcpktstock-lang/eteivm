@@ -7,10 +7,12 @@ import DesktopSettingsNotify from './DesktopSettingsNotify';
 import DesktopSettingsZones from './DesktopSettingsZones';
 import DesktopSettingsWarehouses from './DesktopSettingsWarehouses';
 import DesktopSettingsSystem from './DesktopSettingsSystem';
+import DesktopSettingsLogin from './DesktopSettingsLogin';
+import DesktopSettingsDatabase from './DesktopSettingsDatabase';
 import { saveMasterItem, deleteMasterItem } from '../../api';
 import type { MaterialItem } from '../../types';
 import ConfirmationModal from '../mobile/ConfirmationModal';
-import { Users, Shield, Package, Bell, MapPin, Building2, Warehouse, Settings } from 'lucide-react';
+import { Users, Shield, Package, Bell, MapPin, Building2, Warehouse, Settings, Database } from 'lucide-react';
 
 interface Props {
   onRefresh?: () => void;
@@ -36,6 +38,8 @@ const TABS = [
   { id: 'customers' as const,   Icon: Building2,  label: 'ลูกค้า',     desc: 'ข้อมูลลูกค้า' },
   { id: 'warehouses' as const,  Icon: Warehouse,  label: 'คลังย่อย',   desc: 'ศูนย์กระจาย' },
   { id: 'system' as const,      Icon: Settings,   label: 'ระบบ',       desc: 'พื้นที่ & กฎระบบ' },
+  { id: 'login' as const,       Icon: Settings,   label: 'หน้า Login', desc: 'ปรับแต่งดีไซน์' },
+  { id: 'database' as const,    Icon: Database,   label: 'ฐานข้อมูล',  desc: 'Backup & คอนเนค' },
 ];
 
 type TabId = typeof TABS[number]['id'];
@@ -198,6 +202,12 @@ const DesktopUserAccess: React.FC<Props> = ({
         )}
         {tab === 'system' && (
           <DesktopSettingsSystem user={user} onRefresh={onRefresh} />
+        )}
+        {tab === 'login' && (
+          <DesktopSettingsLogin user={user} onRefresh={onRefresh} settings={appSettings} />
+        )}
+        {tab === 'database' && (
+          <DesktopSettingsDatabase user={user} />
         )}
       </div>
 

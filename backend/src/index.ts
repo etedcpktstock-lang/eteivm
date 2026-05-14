@@ -16,6 +16,7 @@ import settingsRoutes from './routes/settings';
 import warehousesRoutes from './routes/warehouses';
 import uploadRoutes from './routes/upload';
 import itemMergeRoutes from './routes/itemMerge';
+import databaseRoutes from './routes/database';
 
 dotenv.config();
 
@@ -50,6 +51,7 @@ app.use('/api/customers', authenticateToken, customersRoutes);
 app.use('/api/zones', authenticateToken, zonesRoutes);
 app.use('/api/settings', authenticateToken, settingsRoutes);
 app.use('/api/warehouses', authenticateToken, warehousesRoutes);
+app.use('/api/database', authenticateToken, databaseRoutes);
 
 app.use('/api/upload', uploadRoutes);
 app.use('/api/items', authenticateToken, itemMergeRoutes); // merge-duplicates, find-duplicates

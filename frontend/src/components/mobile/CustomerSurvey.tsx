@@ -151,7 +151,7 @@ export default function CustomerSurvey({
  }).sort((a, b) => (a as any).distanceValue - (b as any).distanceValue);
  }
 
- setSearchResults(list.slice(0, 50)); 
+ setSearchResults(list); 
  setLoading(false);
  }, [searchTerm, isNearbyMode, userLocation, customers, calculateDistance]);
 
@@ -334,7 +334,7 @@ export default function CustomerSurvey({
             )}
           </div>
  <div className="space-y-2.5 pb-10">
- {searchResults.map(c => (
+ {searchResults.slice(0, 50).map(c => (
  <button key={c.cv} onClick={() => handleSelectCustomer(c)} className="w-full flex items-center justify-between p-4 bg-white/80 backdrop-blur-md border border-slate-100 rounded-[20px] text-left shadow-[0_2px_10px_rgba(0,0,0,0.02)] active:scale-[0.98] transition-all group">
  <div className="flex items-center gap-3.5 min-w-0">
  <div className="w-11 h-11 shrink-0 bg-slate-50 border border-slate-100 rounded-[14px] flex items-center justify-center text-slate-400">
@@ -527,8 +527,10 @@ export default function CustomerSurvey({
           return (
             <div className="w-full max-w-[280px] aspect-square bg-slate-100 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-lg relative group/img cursor-zoom-in" onClick={() => setPreviewImage(currentPhoto)}>
               <img src={currentPhoto} className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-500" alt="store evidence" onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400?text=Image+Load+Error'; }} />
-              <div className="absolute inset-0 bg-slate-900/0 group-hover/img:bg-slate-900/20 flex items-center justify-center transition-all duration-300">
-                <span className="material-symbols-outlined text-white text-[48px] opacity-0 group-hover/img:opacity-100 scale-50 group-hover/img:scale-100 transition-all duration-300">zoom_in</span>
+              <div className="absolute top-4 left-4 z-10">
+                <div className="bg-black/40 backdrop-blur-md p-2 rounded-xl text-white">
+                  <ZoomIn size={18} />
+                </div>
               </div>
               {!isReadOnly && photos[0] && (
                 <button onClick={(e) => { e.stopPropagation(); setPhotos([]); }} className="absolute top-4 right-4 w-12 h-12 bg-rose-500 hover:bg-rose-600 text-white shadow-lg rounded-2xl flex items-center justify-center transition-colors">
@@ -536,7 +538,7 @@ export default function CustomerSurvey({
                 </button>
               )}
               {!isReadOnly && !photos[0] && (
-                <label className="absolute inset-0 bg-slate-900/60 opacity-0 flex flex-col items-center justify-center text-white cursor-pointer transition-opacity duration-300 hover:opacity-100" onClick={e => e.stopPropagation()}>
+                <label className="absolute inset-0 bg-slate-900/40 flex flex-col items-center justify-center text-white cursor-pointer transition-opacity duration-300" onClick={e => e.stopPropagation()}>
                   <span className="material-symbols-outlined text-[48px] mb-2">add_a_photo</span>
                   <span className="text-[13px] font-bold tracking-tight">คลิกเพื่อเปลี่ยนรูป</span>
                   <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => {
@@ -595,20 +597,46 @@ export default function CustomerSurvey({
   </div>
 </div>
 
- <div className="pt-8 space-y-4">
- <div className="flex items-center gap-3 px-2">
- <div className="w-1.5 h-6 bg-amber-500 rounded-full"></div>
- <h3 className="text-[15px] font-bold text-slate-800 tracking-tight">ประวัติรายการ</h3>
- </div>
- <CustomerSurveyHistory history={customerHistory} />
- </div>
+  <div className="pt-8 space-y-4">
+    <div className="flex items-center gap-3 px-2">
+      <div className="w-1.5 h-6 bg-amber-500 rounded-full"></div>
+      <h3 className="text-[15px] font-bold text-slate-800 tracking-tight">ประวัติรายการ</h3>
+    </div>
+    <CustomerSurveyHistory history={customerHistory} />
+  </div>
 
- <div className="flex gap-3 pt-8 pb-10">
+  <AnimatePresence>
+    {error && (
+      <motion.div 
+        initial={{ opacity: 0, height: 0 }}
+        animate={{ opacity: 1, height: 'auto' }}
+        exit={{ opacity: 0, height: 0 }}
+        className="px-2"
+      >
+        <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl flex items-start gap-3 text-rose-600 mb-4">
+          <span className="material-symbols-outlined shrink-0 mt-0.5">error</span>
+          <div className="flex-1">
+            <p className="text-[14px] font-black leading-tight">เกิดข้อผิดพลาด</p>
+            <p className="text-[12px] font-medium mt-1 leading-relaxed">{error}</p>
+          </div>
+          <button onClick={() => setError(null)} className="shrink-0">
+            <span className="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+
+  <div className="flex gap-3 pt-4 pb-10">
  <button onClick={() => setSelectedCustomer(null)} className="btn no-animation flex-1 h-14 bg-white border border-slate-200 text-slate-500 rounded-xl font-semibold text-[13px]">ยกเลิก</button>
  {!isReadOnly && (
- <button onClick={handleSaveSurvey} disabled={saving} className="btn no-animation flex-[2] h-14 btn-primary text-white rounded-xl flex items-center justify-center gap-3 font-semibold text-[13px] disabled:bg-slate-300">
- {saving ? <span className="app-spinner-sm" aria-hidden="true"></span> : <><Check size={18} /> ยืนยันบันทึก</>}
- </button>
+  <button 
+    onClick={handleSaveSurvey} 
+    disabled={saving} 
+    className="btn no-animation flex-[2] h-14 !bg-emerald-600 hover:!bg-emerald-700 text-white rounded-2xl flex items-center justify-center gap-3 font-bold text-[14px] disabled:!bg-slate-300 disabled:!text-slate-500 shadow-lg shadow-emerald-600/20 active:scale-95 transition-all"
+  >
+    {saving ? <span className="app-spinner-sm" aria-hidden="true"></span> : <><Check size={20} /> ยืนยันบันทึกรายการ</>}
+  </button>
  )}
  </div>
  </motion.div>

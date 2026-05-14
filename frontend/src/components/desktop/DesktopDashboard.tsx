@@ -12,6 +12,7 @@ import {
   DashboardTopMoversCard,
   DashboardAlertsPanel,
   DashboardOperationsPanel,
+  DashboardLowStockCard,
 } from './DesktopDashboardSections';
 import {
   DashboardStockCompositionCard,
@@ -308,6 +309,17 @@ export default function DesktopDashboard({
       });
     }
 
+    const lowStockCount = items.filter(it => toSafeNumber(it.จำนวน) > 0 && toSafeNumber(it.จำนวน) < 5).length;
+    if (lowStockCount > 0) {
+      alerts.push({
+        key: 'low-stock',
+        tone: 'danger',
+        title: 'สินค้าเหลือน้อยกว่า 5 ชิ้น',
+        detail: `มีทั้งหมด ${lowStockCount} รายการที่ใกล้หมดสต็อก`,
+        value: lowStockCount,
+      });
+    }
+
     if (stats.transit >= 10) {
       alerts.push({
         key: 'transit',
@@ -491,6 +503,13 @@ export default function DesktopDashboard({
       .slice(0, 5);
   }, [rangeTransactions]);
 
+  const lowStockItems = useMemo(() => {
+    return items
+      .filter(item => toSafeNumber(item.จำนวน) < 5)
+      .sort((a, b) => toSafeNumber(a.จำนวน) - toSafeNumber(b.จำนวน))
+      .slice(0, 8);
+  }, [items]);
+
   const comparisonStrip = useMemo(() => {
     return [
       {
@@ -590,10 +609,12 @@ export default function DesktopDashboard({
         <DashboardComparisonChartCard data={comparisonData} onNavigate={navigateTo} />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 1fr) minmax(320px, 1fr)', gap: 20, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 1fr) minmax(320px, 1fr) minmax(320px, 1fr)', gap: 20, marginBottom: 20 }}>
         <DashboardTopMoversCard items={topMovers} onNavigate={navigateTo} />
 
         <DashboardTopEntitiesCard topActiveCustomers={topActiveCustomers} topActiveZones={topActiveZones} onNavigate={navigateTo} />
+        
+        <DashboardLowStockCard items={lowStockItems} onNavigate={navigateTo} />
       </div>
     </div>
   );

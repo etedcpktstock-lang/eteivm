@@ -238,7 +238,7 @@ const SettingsWarehouses: React.FC<SettingsWarehousesProps> = ({
  </button>
  </div>
  ) : (
- <div className="flex items-center gap-3 opacity-0 ">
+ <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
  {!isMain && (
  <button 
  onClick={() => markAsMain(wh.id)}

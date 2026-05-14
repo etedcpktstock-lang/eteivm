@@ -16,7 +16,8 @@ export function usePossession(
    preCalculatedInventory?: any[]
 ) {
    const possessionList = useMemo(() => {
-      const grouped = preCalculatedInventory || calculateCustomerInventory(transactions, customerCv, logisticsJobs, masterItems);
+      let rawGrouped = preCalculatedInventory || calculateCustomerInventory(transactions, customerCv, logisticsJobs, masterItems);
+      const grouped = (rawGrouped || []).filter((it: any) => (it.qty || it.quantity || 0) > 0);
       const result: any[] = [];
 
       grouped.forEach(item => {

@@ -282,3 +282,55 @@ export function DashboardRecentActivityCard({ items, onNavigate }: { items: Rece
     </div>
   );
 }
+export function DashboardLowStockCard({ items, onNavigate }: { items: any[]; onNavigate: (tab?: any) => void }) {
+  return (
+    <div className="plain-card" style={{ marginBottom: 0 }}>
+      <div className="plain-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <AlertTriangle size={18} style={{ color: '#ef4444' }} />
+          <span>สินค้าเหลือน้อย (&lt; 5)</span>
+        </div>
+        <button className="plain-btn-sm" onClick={() => onNavigate('inventory')} style={{ background: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca' }}>ดูสต็อก</button>
+      </div>
+      <div style={{ padding: '8px 16px 16px 16px' }}>
+        {items.length > 0 ? (
+          <div style={{ display: 'grid', gap: 10 }}>
+            {items.map((item, index) => (
+              <div 
+                key={`${item.id}-${index}`} 
+                onClick={() => onNavigate('inventory')} 
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between', 
+                  gap: 12, 
+                  background: '#fff', 
+                  border: '1px solid #fee2e2', 
+                  borderRadius: 12, 
+                  padding: '10px 12px', 
+                  cursor: 'pointer' 
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444' }}></div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {item.รายการ || item.ประเภท}
+                    </div>
+                    <div className="dash-hint" style={{ fontSize: 10 }}>{item.ยี่ห้อหรือรูปแบบ || item.ประเภท}</div>
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: '#b91c1c' }}>{item.จำนวน?.toLocaleString()}</div>
+                  <div className="dash-hint" style={{ fontSize: 9 }}>คงเหลือ</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="dash-empty" style={{ color: '#10b981' }}>ยอดเยี่ยม! ไม่มีสินค้าเหลือน้อย</div>
+        )}
+      </div>
+    </div>
+  );
+}

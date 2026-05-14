@@ -70,26 +70,37 @@ export class Notifier {
   }
 
   private static formatThaiMessage(p: NotificationPayload): string {
-    const title = p.type === 'RECEIVE' ? '📥 รับพัสดุเข้าคลัง' :
-                  p.type === 'ISSUE' ? '📤 เบิกพัสดุออก' :
-                  p.type === 'RETURN' ? '🔄 รับคืนพัสดุ' :
-                  p.type === 'VOID' ? '🚫 ยกเลิกรายการ' : '📝 แจ้งงานใหม่';
+    const icon = p.type === 'RECEIVE' ? '📥' :
+                 p.type === 'ISSUE' ? '📤' :
+                 p.type === 'RETURN' ? '🔄' :
+                 p.type === 'VOID' ? '🚫' : '📝';
+                 
+    const typeText = p.type === 'RECEIVE' ? 'รับพัสดุเข้าคลัง' :
+                     p.type === 'ISSUE' ? 'เบิกพัสดุออก' :
+                     p.type === 'RETURN' ? 'รับคืนพัสดุ' :
+                     p.type === 'VOID' ? 'ยกเลิกรายการ' : 'แจ้งงานใหม่';
 
-    let msg = `📢 *${title}*\n`;
-    msg += `━━━━━━━━━━━━━━\n`;
-    msg += `🔢 *เลขที่:* ${p.txnNo}\n`;
-    if (p.cv || p.customer) msg += `🏢 *ลูกค้า:* ${p.customer || ''} (${p.cv || '-'})\n`;
+    const totalItems = p.items.reduce((sum, it) => sum + Number(it.quantity), 0);
+
+    let msg = `${icon} 🚨 *ข้อมูลการทำรายการใหม่* 🚨\n`;
+    msg += `━━━━━━━━━━━━━━━━━━━━\n`;
+    msg += `🏷 *ประเภท:* ${typeText} (${p.type})\n`;
+    msg += `🔢 *เลขที่ทำรายการ:* #${p.txnNo}\n`;
+    msg += `⏰ *วันเวลา:* ${new Date().toLocaleString('th-TH')}\n`;
+    msg += `━━━━━━━━━━━━━━━━━━━━\n`;
+    msg += `📌 *ข้อมูลผู้เกี่ยวข้อง*\n`;
     msg += `👤 *ผู้ทำรายการ:* ${p.operator}\n`;
-    msg += `📅 *เวลา:* ${new Date().toLocaleString('th-TH')}\n`;
-    msg += `━━━━━━━━━━━━━━\n`;
-    msg += `📦 *รายการพัสดุ:*\n`;
+    msg += `🏢 *ลูกค้า/โครงการ:* ${p.customer || '-'}\n`;
+    msg += `🔖 *รหัส CV:* ${p.cv || '-'}\n`;
+    msg += `━━━━━━━━━━━━━━━━━━━━\n`;
+    msg += `📦 *สรุปรายการพัสดุ* (รวม ${totalItems} ชิ้น)\n`;
     
     p.items.forEach((it, idx) => {
-      msg += `${idx + 1}. ${it.name} (x${it.quantity})\n`;
+      msg += ` 🔹 ${idx + 1}. ${it.name} (x${it.quantity})\n`;
     });
 
     if (p.note) {
-      msg += `━━━━━━━━━━━━━━\n`;
+      msg += `━━━━━━━━━━━━━━━━━━━━\n`;
       msg += `📝 *หมายเหตุ:* ${p.note}\n`;
     }
 
@@ -101,36 +112,58 @@ export class Notifier {
 
     try {
       if (photos && photos.length > 0) {
-        // Send first photo with caption
-        const photo = photos[0];
-        
-        if (photo.startsWith('data:image')) {
-          // It's a base64 string
-          const base64Data = photo.split(',')[1];
-          const buffer = Buffer.from(base64Data, 'base64');
-          
+        if (photos.length === 1) {
+          // Send Single Photo
+          const photo = photos[0];
+          if (photo.startsWith('data:image')) {
+            const base64Data = photo.split(',')[1];
+            const buffer = Buffer.from(base64Data, 'base64');
+            const formData = new FormData();
+            formData.append('chat_id', chatId);
+            formData.append('photo', buffer, { filename: 'photo.jpg' });
+            formData.append('caption', message);
+            formData.append('parse_mode', 'Markdown');
+            await axios.post(`${baseUrl}/sendPhoto`, formData, { headers: formData.getHeaders() });
+          } else {
+            await axios.post(`${baseUrl}/sendPhoto`, {
+              chat_id: chatId, photo, caption: message, parse_mode: 'Markdown'
+            });
+          }
+        } else {
+          // Send Multiple Photos as Media Group (Album)
           const formData = new FormData();
           formData.append('chat_id', chatId);
-          formData.append('photo', buffer, { filename: 'photo.jpg' });
-          formData.append('caption', message);
-          formData.append('parse_mode', 'Markdown');
+          
+          const mediaArray: any[] = [];
+          
+          for (let i = 0; i < photos.length; i++) {
+            const photo = photos[i];
+            const mediaObj: any = { type: 'photo' };
+            
+            // Add caption only to the first photo
+            if (i === 0) {
+              mediaObj.caption = message;
+              mediaObj.parse_mode = 'Markdown';
+            }
 
-          await axios.post(`${baseUrl}/sendPhoto`, formData, {
-            headers: formData.getHeaders()
-          });
-        } else {
-          // It's a URL
-          await axios.post(`${baseUrl}/sendPhoto`, {
-            chat_id: chatId,
-            photo: photo,
-            caption: message,
-            parse_mode: 'Markdown'
-          });
+            if (photo.startsWith('data:image')) {
+              const base64Data = photo.split(',')[1];
+              const buffer = Buffer.from(base64Data, 'base64');
+              const filename = `photo_${i}.jpg`;
+              
+              formData.append(filename, buffer, { filename });
+              mediaObj.media = `attach://${filename}`;
+            } else {
+              mediaObj.media = photo;
+            }
+            mediaArray.push(mediaObj);
+          }
+          
+          formData.append('media', JSON.stringify(mediaArray));
+          await axios.post(`${baseUrl}/sendMediaGroup`, formData, { headers: formData.getHeaders() });
         }
-
-        // Send remaining photos as media group (optional, keeping it simple for now)
       } else {
-        // Send text only
+        // Send Text Only
         await axios.post(`${baseUrl}/sendMessage`, {
           chat_id: chatId,
           text: message,

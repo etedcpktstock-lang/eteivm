@@ -17,8 +17,8 @@ interface Props {
 }
 
 // ─── Possession Badge ───
-const PossessionBadge: React.FC<{ cv: string; transactions: any[]; logisticsJobs: any[]; items: any[] }> = ({ cv, transactions, logisticsJobs, items }) => {
-  const possession = usePossession(transactions, cv, logisticsJobs, items);
+const PossessionBadge: React.FC<{ cv: string; transactions: any[]; logisticsJobs: any[]; items: any[]; inventory?: any[] }> = ({ cv, transactions, logisticsJobs, items, inventory }) => {
+  const possession = usePossession(transactions, cv, logisticsJobs, items, inventory);
   const [expanded, setExpanded] = useState(false);
 
   if (!possession || possession.length === 0) return null;
@@ -36,7 +36,9 @@ const PossessionBadge: React.FC<{ cv: string; transactions: any[]; logisticsJobs
         <div className="mt-2 space-y-1.5 max-h-[200px] overflow-y-auto">
           {possession.map((p: any, i: number) => (
             <div key={i} className="flex items-center justify-between bg-indigo-50/50 px-2.5 py-1.5 rounded-lg text-[11px]">
-              <span className="font-bold text-slate-700 truncate max-w-[240px]">{p.name}</span>
+              <span className="font-bold text-slate-700 truncate max-w-[240px]">
+                {p.name}{p.detail ? ` ${p.detail}` : ''}{p.size ? ` ขนาด ${p.size}` : ''}
+              </span>
               <span className="font-black text-indigo-600 ml-2 shrink-0">×{p.qty}</span>
             </div>
           ))}
@@ -491,8 +493,8 @@ const DesktopSettingsCustomers: React.FC<Props> = ({
                     <td className="px-5 py-3">
                       <div>
                         <span className="text-[13px] font-bold text-slate-800">{c.name || '-'}</span>
-                        {transactions.length > 0 && items.length > 0 && (
-                          <PossessionBadge cv={c.cv} transactions={transactions} logisticsJobs={logisticsJobs} items={items} />
+                        {items.length > 0 && (
+                          <PossessionBadge cv={c.cv} transactions={transactions} logisticsJobs={logisticsJobs} items={items} inventory={c.inventory} />
                         )}
                       </div>
                     </td>

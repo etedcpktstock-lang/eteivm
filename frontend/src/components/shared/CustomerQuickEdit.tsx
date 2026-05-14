@@ -203,7 +203,7 @@ const CustomerQuickEdit: React.FC<CustomerQuickEditProps> = ({
  alt="Shop" 
  className="w-full h-full object-cover"
  />
- <div className="absolute inset-0 bg-black/40 opacity-0 flex items-center justify-center gap-3">
+ <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
  <button 
  onClick={() => fileInputRef.current?.click()}
  className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-900 "

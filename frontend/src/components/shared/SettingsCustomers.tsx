@@ -471,8 +471,8 @@ const SettingsCustomers: React.FC<SettingsCustomersProps> = ({
  onClick={() => setPreviewImage(c.image_url)}
  >
  <img src={c.image_url} className="w-full h-full object-cover group-hover/img:scale-110" alt="Shop" />
- <div className="absolute inset-0 bg-black/0 flex items-center justify-center ">
- <span className="material-symbols-outlined text-white opacity-0 scale-50 ">zoom_in</span>
+ <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/40 flex items-center justify-center transition-all">
+ <span className="material-symbols-outlined text-white opacity-0 group-hover/img:opacity-100 scale-50 group-hover/img:scale-100 transition-all">zoom_in</span>
  </div>
  </div>
  ) : (

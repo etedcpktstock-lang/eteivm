@@ -8,7 +8,14 @@ const router = Router();
 // GET /api/customers
 router.get('/', async (_req: Request, res: Response) => {
   try {
-    const customers = await prisma.customer.findMany({ orderBy: { cv: 'asc' } });
+    const customers = await prisma.customer.findMany({ 
+      include: { 
+        inventory: { 
+          include: { item: true } 
+        } 
+      },
+      orderBy: { cv: 'asc' } 
+    });
     
     // แปลงให้ตรงกับ format เดิม (ถ้ามี field พิเศษที่ Frontend คาดหวัง)
     const mapped = customers.map(c => ({
@@ -24,6 +31,16 @@ router.get('/', async (_req: Request, res: Response) => {
       lng: c.longitude ? String(c.longitude) : '',
       image_url: c.image_url ?? '',
       rowIndex: c.cv, 
+      inventory: (c.inventory || []).map((inv: any) => ({
+        id: inv.id,
+        itemId: inv.item_id,
+        name: inv.item?.item_name || inv.item?.category || 'พัสดุ',
+        brand: inv.item?.brand || '',
+        size: inv.item?.size || '',
+        detail: inv.item?.details || '',
+        qty: inv.quantity,
+        lastUpdate: inv.last_updated
+      }))
     }));
     
     return res.json(mapped);

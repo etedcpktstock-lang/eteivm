@@ -8,6 +8,21 @@ import { requireRole } from '../middleware/permissions';
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'ete-dc-pkt-secret-2026';
 
+// GET /api/auth/public-settings
+router.get('/public-settings', async (_req: Request, res: Response) => {
+  try {
+    const keys = ['APP_NAME', 'APP_SUBTITLE', 'APP_ICON', 'APP_TITLE', 'LOGIN_TITLE', 'LOGIN_SUBTITLE', 'LOGIN_LOGO_URL', 'LOGIN_BG_URL', 'LOGIN_POWERED_BY'];
+    const settingsRows = await prisma.systemSetting.findMany({
+      where: { key: { in: keys } }
+    });
+    const settings: Record<string, string> = {};
+    settingsRows.forEach(s => { settings[s.key] = s.value; });
+    return res.json({ status: 'success', settings });
+  } catch (err: any) {
+    return res.json({ status: 'error', message: err.message });
+  }
+});
+
 // POST /api/auth/login
 router.post('/login', async (req: Request, res: Response) => {
   const { username, password, deviceInfo } = req.body;
