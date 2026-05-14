@@ -1,5 +1,5 @@
-# Use Node.js 22 LTS slim image
-FROM node:22-slim
+# Use Node.js 20 LTS slim image for better stability on GCP
+FROM node:20-slim
 
 # Install openssl for Prisma
 RUN apt-get update -y && apt-get install -y openssl
