@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: eteivm-backend
+    env: docker
+    rootDir: backend
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
